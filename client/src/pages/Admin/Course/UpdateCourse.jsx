@@ -24,6 +24,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getCategories } from "@/features/category/categorySlice.js";
 import { getTeachers } from "@/features/admin/adminSlice.js";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {getUserData} from "@/auth/jwtService.js";
+import {getCourseById} from "@/features/course/courseSlice.js";
 
 // Validation schema - sizning database schema ga mos
 const lessonSchema = z.object({
@@ -220,10 +222,10 @@ export default function UpdateCourse() {
 	const { id } = useParams();
 	const { categories } = useSelector(state => state.category);
 	const { teachers } = useSelector(state => state.admin);
+	const {course} = useSelector(state => state.course)
 	
 	const [isLoading, setIsLoading] = useState(false);
 	const [serverError, setServerError] = useState("");
-	const [course, setCourse] = useState(null);
 	const [activeTab, setActiveTab] = useState("course");
 	
 	const {
@@ -242,8 +244,8 @@ export default function UpdateCourse() {
 			currency: "usd",
 			published: false,
 			preview_image: null,
-			teacher_id: "",
-			category_id: "",
+			teacher: "",
+			category: "",
 			lessons: [],
 		}
 	});
@@ -253,47 +255,37 @@ export default function UpdateCourse() {
 		name: "lessons"
 	});
 	
-	// Fetch course data
 	useEffect(() => {
-		fetchCourseData();
 		dispatch(getCategories());
 		dispatch(getTeachers());
-	}, [dispatch, id]);
+	}, [dispatch])
 	
-	const fetchCourseData = async () => {
-		try {
-			const response = await instance.get(`/courses/${id}`);
-			const courseData = response.data;
-			
-			setCourse(courseData);
-			
-			// Reset form with course data
-			reset({
-				title: courseData.title,
-				description: courseData.description,
-				price_cents: courseData.price_cents,
-				currency: courseData.currency,
-				published: courseData.published,
-				teacher_id: courseData.teacher?.id?.toString(),
-				category_id: courseData.category?.id?.toString(),
-				lessons: courseData.lessons?.map(lesson => ({
-					id: lesson.id,
-					title: lesson.title,
-					content: lesson.content || "",
-					video_url: lesson.video_url || "",
-					link: lesson.link || "",
-					order_index: lesson.order_index,
-					is_preview: lesson.is_preview || false,
-					is_published: lesson.is_published || false,
-				})) || [],
-			});
-			
-		} catch (error) {
-			console.error("Error fetching course:", error);
-			toast.error("Failed to load course data");
-			navigate("/admin/courses");
-		}
-	};
+	// Fetch course data
+	useEffect(() => {
+		dispatch(getCourseById({id})).then(({payload}) => {
+			if (payload) {
+				reset({
+					title: payload?.title ?? "",
+					description: payload?.description ?? "",
+					price_cents: payload?.price_cents ?? "",
+					currency: payload?.currency ?? "",
+					published: payload?.published ?? false,
+					teacher: payload?.teacher?.id?.toString() ?? "",
+					category: payload?.category?.id?.toString() ?? "",
+					lessons: payload?.lessons?.map(lesson => ({
+						id: lesson.id,
+						title: lesson.title,
+						content: lesson.content || "",
+						video_url: lesson.video_url || "",
+						link: lesson.link || "",
+						order_index: lesson.order_index,
+						is_preview: lesson.is_preview || false,
+						is_published: lesson.is_published || false,
+					})) || [],
+				});
+			}
+		})
+	}, [dispatch, id]);
 	
 	const onSubmit = async (data) => {
 		setIsLoading(true);
@@ -308,8 +300,8 @@ export default function UpdateCourse() {
 			formData.append("price_cents", data.price_cents.toString());
 			formData.append("currency", data.currency);
 			formData.append("published", data.published.toString());
-			formData.append("category_id", data.category_id);
-			formData.append("teacher_id", data.teacher_id);
+			formData.append("category", data.category_id);
+			formData.append("teacher", data.teacher_id);
 			
 			// Handle preview image
 			if (data.preview_image && data.preview_image instanceof File) {
@@ -427,63 +419,70 @@ export default function UpdateCourse() {
 									</div>
 								</div>
 								
-								{/* Category & Teacher */}
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-									<Controller
-										name="category_id"
-										control={control}
-										render={({ field }) => (
-											<div className="flex flex-col gap-2">
-												<Label>Category *</Label>
-												<Select value={field.value} onValueChange={field.onChange}>
-													<SelectTrigger className={errors.category_id ? "border-red-500" : ""}>
-														<SelectValue placeholder="Select category" />
+								<div className="grid grid-cols-2 gap-4">
+									<div className="flex flex-col gap-1">
+										<Label htmlFor="course-category">Category *</Label>
+										<Controller
+											name="category"
+											control={control}
+											render={({field}) => (
+												<Select
+													value={field.value}
+													onValueChange={field.onChange}
+												>
+													<SelectTrigger className="w-full">
+														<SelectValue placeholder="Select a category"/>
+														<SelectContent>
+															<SelectGroup>
+																<SelectLabel>Categories</SelectLabel>
+																{categories?.map((item) => (
+																	<SelectItem key={item.id} value={item.id.toString()}>
+																		{item.name}
+																	</SelectItem>
+																))}
+															</SelectGroup>
+														</SelectContent>
 													</SelectTrigger>
-													<SelectContent>
-														<SelectGroup>
-															<SelectLabel>Categories</SelectLabel>
-															{categories?.map(cat => (
-																<SelectItem key={cat.id} value={cat.id.toString()}>
-																	{cat.name}
-																</SelectItem>
-															))}
-														</SelectGroup>
-													</SelectContent>
 												</Select>
-												{errors.category_id && (
-													<p className="text-red-500 text-sm">{errors.category_id.message}</p>
-												)}
-											</div>
+											)}
+										/>
+										{errors.category && (
+											<p className="text-red-500 text-sm">{errors.category.message}</p>
 										)}
-									/>
+									</div>
 									
-									<Controller
-										name="teacher_id"
-										control={control}
-										render={({ field }) => (
-											<div className="flex flex-col gap-2">
-												<Label>Teacher *</Label>
-												<Select value={field.value} onValueChange={field.onChange}>
-													<SelectTrigger className={errors.teacher_id ? "border-red-500" : ""}>
-														<SelectValue placeholder="Select teacher" />
-													</SelectTrigger>
-													<SelectContent>
-														<SelectGroup>
-															<SelectLabel>Teachers</SelectLabel>
-															{teachers?.map(t => (
-																<SelectItem key={t.id} value={t.id.toString()}>
-																	{t.name}
-																</SelectItem>
-															))}
-														</SelectGroup>
-													</SelectContent>
-												</Select>
-												{errors.teacher_id && (
-													<p className="text-red-500 text-sm">{errors.teacher_id.message}</p>
+									{getUserData().role === "admin" && (
+										<div className="flex flex-col gap-1">
+											<Label htmlFor="course-category">Teacher *</Label>
+											<Controller
+												name="teacher"
+												control={control}
+												render={({field}) => (
+													<Select
+														value={field.value}
+														onValueChange={field.onChange}
+													>
+														<SelectTrigger className="w-full">
+															<SelectValue placeholder="Select a teacher"/>
+															<SelectContent>
+																<SelectGroup>
+																	<SelectLabel>Teachers</SelectLabel>
+																	{teachers?.map((item) => (
+																		<SelectItem key={item?.id} value={item?.id?.toString()}>
+																			{item?.name}
+																		</SelectItem>
+																	))}
+																</SelectGroup>
+															</SelectContent>
+														</SelectTrigger>
+													</Select>
 												)}
-											</div>
-										)}
-									/>
+											/>
+											{errors.category && (
+												<p className="text-red-500 text-sm">{errors.category.message}</p>
+											)}
+										</div>
+									)}
 								</div>
 								
 								{/* Pricing */}

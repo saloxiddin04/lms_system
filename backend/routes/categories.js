@@ -31,7 +31,7 @@ router.get('/', authenticate, authorizeRole("admin", "teacher"), async (req, res
 				c.*,
 				COUNT(co.id) as courses_count
 			FROM categories c
-			LEFT JOIN courses co ON c.id = co.category_id
+			LEFT JOIN courses co ON c.id = co.category
 			GROUP BY c.id
 			ORDER BY c.created_at DESC;
 		`);

@@ -19,9 +19,9 @@ CREATE TABLE IF NOT EXISTS categories (
 CREATE TABLE IF NOT EXISTS courses (
   id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
-  category_id INTEGER REFERENCES categories(id) ON DELETE SET NULL,
+  category INTEGER REFERENCES categories(id) ON DELETE SET NULL,
   description TEXT,
-  teacher_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  teacher INTEGER REFERENCES users(id) ON DELETE SET NULL,
   price_cents INTEGER DEFAULT 0,
   currency VARCHAR(10) DEFAULT 'usd',
   published BOOLEAN DEFAULT false,

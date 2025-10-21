@@ -500,7 +500,7 @@ router.get('/', authenticate, async (req, res) => {
             'id', u.id, 'name', u.name, 'email', u.email, 'role', u.role
           ) AS teacher
          FROM courses c
-         JOIN users u ON c.teacher_id = u.id
+         JOIN users u ON c.teacher = u.id
          WHERE c.teacher_id = $1
          ORDER BY c.created_at DESC`,
 				[req.user.id]
@@ -512,8 +512,8 @@ router.get('/', authenticate, async (req, res) => {
             CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name, 'slug', cat.slug)
                  ELSE NULL END AS category
          FROM courses c
-         JOIN users u ON c.teacher_id = u.id
-         LEFT JOIN categories cat ON c.category_id = cat.id
+         JOIN users u ON c.teacher = u.id
+         LEFT JOIN categories cat ON c.category = cat.id
          ORDER BY c.created_at DESC`
 			);
 		} else {
@@ -522,7 +522,7 @@ router.get('/', authenticate, async (req, res) => {
             'id', u.id, 'name', u.name, 'email', u.email, 'role', u.role
           ) AS teacher
          FROM courses c
-         JOIN users u ON c.teacher_id = u.id
+         JOIN users u ON c.teacher = u.id
          WHERE c.published = true
          ORDER BY c.created_at DESC`
 			);
@@ -546,11 +546,11 @@ router.get('/:id', authenticate, async (req, res) => {
 		// 🧩 Kurs ma'lumotini olish
 		const courseQ = await db.query(`
       SELECT c.*,
-             u.id AS teacher_id, u.name AS teacher_name, u.email AS teacher_email,
-             cat.id AS category_id, cat.name AS category_name, cat.slug AS category_slug
+             u.id AS teacher, u.name AS teacher_name, u.email AS teacher_email,
+             cat.id AS category, cat.name AS category_name, cat.slug AS category_slug
       FROM courses c
-      LEFT JOIN users u ON c.teacher_id = u.id
-      LEFT JOIN categories cat ON c.category_id = cat.id
+      LEFT JOIN users u ON c.teacher = u.id
+      LEFT JOIN categories cat ON c.category = cat.id
       WHERE c.id = $1
     `, [id]);
 		
@@ -607,12 +607,12 @@ router.get('/:id', authenticate, async (req, res) => {
 		res.status(200).json({
 			...course,
 			teacher: {
-				id: course.teacher_id,
+				id: course.teacher,
 				name: course.teacher_name,
 				email: course.teacher_email,
 			},
 			category: {
-				id: course.category_id,
+				id: course.category,
 				name: course.category_name,
 				slug: course.category_slug,
 			},
@@ -641,23 +641,23 @@ router.post(
 	]),
 	async (req, res) => {
 		try {
-			const { title, description, price_cents, currency, category_id, teacher_id, lessons } = req.body;
+			const { title, description, price_cents, currency, category, teacher, lessons } = req.body;
 			const files = req.files;
 			const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
 			
-			let finalTeacherId = req.user.role === 'admin' && teacher_id ? teacher_id : req.user.id;
+			let finalTeacherId = req.user.role === 'admin' && teacher ? teacher : req.user.id;
 			
-			if (!category_id) return res.status(400).json({ error: 'Category is required' });
+			if (!category) return res.status(400).json({ error: 'Category is required' });
 			
 			// 1️⃣ Course yaratish
 			const courseQ = await db.query(
-				`INSERT INTO courses (title, description, teacher_id, category_id, price_cents, currency, published, preview_image)
+				`INSERT INTO courses (title, description, teacher, category, price_cents, currency, published, preview_image)
          VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING *`,
 				[
 					title,
 					description,
 					finalTeacherId,
-					category_id,
+					category,
 					price_cents || 0,
 					currency || 'usd',
 					files.preview ? `/uploads/courses/${files.preview[0].filename}` : null
@@ -709,7 +709,7 @@ router.post(
  */
 router.put('/:id', authenticate, authorizeRole('teacher', 'admin'), upload.single('preview'), async (req, res) => {
 	try {
-		const { title, description, category_id, price_cents, currency, published } = req.body;
+		const { title, description, category, price_cents, currency, published } = req.body;
 		
 		const previewImage = req.file
 			? `/uploads/courses/${req.file.filename}`
@@ -717,10 +717,10 @@ router.put('/:id', authenticate, authorizeRole('teacher', 'admin'), upload.singl
 		
 		const q = await db.query(
 			`UPDATE courses
-       SET title=$1, description=$2, category_id=$3, price_cents=$4, currency=$5,
+       SET title=$1, description=$2, category=$3, price_cents=$4, currency=$5,
            preview_image=COALESCE($6, preview_image), published=$7
        WHERE id=$8 RETURNING *`,
-			[title, description, category_id, price_cents, currency, previewImage, published, req.params.id]
+			[title, description, category, price_cents, currency, previewImage, published, req.params.id]
 		);
 		
 		res.status(201).json(q.rows[0]);

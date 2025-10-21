@@ -23,6 +23,7 @@ import {
 import {useDispatch, useSelector} from "react-redux";
 import {getCategories} from "@/features/category/categorySlice.js";
 import {getTeachers} from "@/features/admin/adminSlice.js";
+import {getUserData} from "@/auth/jwtService.js";
 
 // Validation schema
 const lessonSchema = z.object({
@@ -180,8 +181,8 @@ export default function CreateCourse() {
 			formData.append("price_cents", data.price_cents.toString());
 			formData.append("currency", data.currency);
 			formData.append("published", data.published.toString());
-			formData.append("category_id", data.category);
-			formData.append("teacher_id", data.teacher);
+			formData.append("category", data.category);
+			formData.append("teacher", data.teacher);
 			
 			if (data.preview && data.preview instanceof File) formData.append("preview", data.preview);
 			
@@ -238,47 +239,69 @@ export default function CreateCourse() {
 						
 						{/* Category & Teacher */}
 						<div className="grid grid-cols-2 gap-4">
-							<Controller
-								name="category"
-								control={control}
-								render={({field}) => (
-									<div>
-										<Label>Category</Label>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger><SelectValue placeholder="Select category"/></SelectTrigger>
-											<SelectContent>
-												<SelectGroup>
-													<SelectLabel>Categories</SelectLabel>
-													{categories?.map(cat => (
-														<SelectItem key={cat.id} value={cat.id.toString()}>{cat.name}</SelectItem>
-													))}
-												</SelectGroup>
-											</SelectContent>
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="course-category">Category</Label>
+								<Controller
+									name="category"
+									control={control}
+									render={({field}) => (
+										<Select
+											value={field.value}
+											onValueChange={field.onChange}
+										>
+											<SelectTrigger className="w-full">
+												<SelectValue placeholder="Select a category"/>
+												<SelectContent>
+													<SelectGroup>
+														<SelectLabel>Categories</SelectLabel>
+														{categories?.map((item) => (
+															<SelectItem key={item.id} value={item.id.toString()}>
+																{item.name}
+															</SelectItem>
+														))}
+													</SelectGroup>
+												</SelectContent>
+											</SelectTrigger>
 										</Select>
-									</div>
+									)}
+								/>
+								{errors.category && (
+									<p className="text-red-500 text-sm">{errors.category.message}</p>
 								)}
-							/>
+							</div>
 							
-							<Controller
-								name="teacher"
-								control={control}
-								render={({field}) => (
-									<div>
-										<Label>Teacher</Label>
-										<Select value={field.value} onValueChange={field.onChange}>
-											<SelectTrigger><SelectValue placeholder="Select teacher"/></SelectTrigger>
-											<SelectContent>
-												<SelectGroup>
-													<SelectLabel>Teachers</SelectLabel>
-													{teachers?.map(t => (
-														<SelectItem key={t.id} value={t.id.toString()}>{t.name}</SelectItem>
-													))}
-												</SelectGroup>
-											</SelectContent>
-										</Select>
-									</div>
-								)}
-							/>
+							{getUserData().role === "admin" && (
+								<div className="flex flex-col gap-1">
+									<Label htmlFor="course-category">Teacher</Label>
+									<Controller
+										name="teacher"
+										control={control}
+										render={({field}) => (
+											<Select
+												value={field.value}
+												onValueChange={field.onChange}
+											>
+												<SelectTrigger className="w-full">
+													<SelectValue placeholder="Select a teacher"/>
+													<SelectContent>
+														<SelectGroup>
+															<SelectLabel>Teachers</SelectLabel>
+															{teachers?.map((item) => (
+																<SelectItem key={item?.id} value={item?.id?.toString()}>
+																	{item?.name}
+																</SelectItem>
+															))}
+														</SelectGroup>
+													</SelectContent>
+												</SelectTrigger>
+											</Select>
+										)}
+									/>
+									{errors.category && (
+										<p className="text-red-500 text-sm">{errors.category.message}</p>
+									)}
+								</div>
+							)}
 						</div>
 						
 						{/* Price, currency, published */}
@@ -287,16 +310,29 @@ export default function CreateCourse() {
 							<Input {...register("currency")} readOnly/>
 						</div>
 						
-						<Controller
-							name="published"
-							control={control}
-							render={({field}) => (
-								<div className="flex items-center gap-2">
-									<Switch checked={field.value} onCheckedChange={field.onChange}/>
-									<Label>Published</Label>
-								</div>
-							)}
-						/>
+						<div className="flex flex-col gap-2">
+							<Label>Publication Status</Label>
+							<Controller
+								name="published"
+								control={control}
+								render={({field}) => (
+									<div className="flex items-center gap-3 p-2 border rounded-lg">
+										<Switch
+											checked={field.value}
+											onCheckedChange={field.onChange}
+										/>
+										<div>
+											<Label className="font-medium">
+												{field.value ? "Published" : "Draft"}
+											</Label>
+											<p className="text-sm text-gray-500">
+												{field.value ? "Course is visible to students" : "Course is hidden"}
+											</p>
+										</div>
+									</div>
+								)}
+							/>
+						</div>
 						
 						{/* Preview */}
 						<Controller
