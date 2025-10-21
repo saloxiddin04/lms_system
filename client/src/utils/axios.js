@@ -18,7 +18,7 @@ instance.interceptors.request.use(
 		return config;
 	},
 	(error) => {
-		toast.error(error.message)
+		toast.error(error?.response?.data?.error)
 		console.log("error", error)
 		// toast.error(error?.message)
 		return Promise.reject(error);
@@ -60,7 +60,7 @@ instance.interceptors.response.use(
 			// 	})
 			// );
 		}
-		toast.error(error.message)
+		toast.error(error?.response?.data?.error)
 		return Promise.reject(error);
 	}
 );

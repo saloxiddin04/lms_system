@@ -1,6 +1,6 @@
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {deleteCourse, getCourses, togglePublishCourse} from "@/features/course/courseSlice.js";
+import {getCourses, togglePublishCourse} from "@/features/course/courseSlice.js";
 import Loader from "@/components/Loader.jsx";
 import {Button} from "@/components/ui/button.jsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.jsx";
@@ -16,7 +16,7 @@ const TopSideButtons = () => {
 		<Button
 			size="sm"
 			variant="default"
-			onClick={() => navigate('id')}
+			onClick={() => navigate('create-course')}
 		>
 			Create course
 		</Button>
@@ -71,7 +71,7 @@ const Course = () => {
 								<Button
 									size="sm"
 									variant="outline"
-									onClick={() => navigate(`${course.id}`)}
+									onClick={() => navigate(`update-course/${course.id}`)}
 								>
 									Edit
 								</Button>
@@ -83,13 +83,6 @@ const Course = () => {
 									}
 								>
 									{course.published ? "Unpublish" : "Publish"}
-								</Button>
-								<Button
-									size="sm"
-									variant="destructive"
-									onClick={() => dispatch(deleteCourse({id: course?.id}))}
-								>
-									Delete
 								</Button>
 							</div>
 						</CardContent>

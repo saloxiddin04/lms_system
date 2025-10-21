@@ -8,7 +8,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { Trash2, Loader2 } from "lucide-react";
 
 export function ConfirmationModal({
 	                                  isOpen,

@@ -29,24 +29,16 @@ CREATE TABLE IF NOT EXISTS courses (
   preview_image VARCHAR(1024)
 );
 
-CREATE TABLE IF NOT EXISTS chapters (
-  id SERIAL PRIMARY KEY,
-  course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
-  title VARCHAR(255) NOT NULL,
-  order_index INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-
 CREATE TABLE IF NOT EXISTS lessons (
   id SERIAL PRIMARY KEY,
   course_id INTEGER REFERENCES courses(id) ON DELETE CASCADE,
-  chapter_id INTEGER REFERENCES chapters(id) ON DELETE CASCADE, -- 🔥 qo‘shildi
   title VARCHAR(255) NOT NULL,
   content TEXT,
   video_url VARCHAR(1024),
   link VARCHAR(1024),
   order_index INTEGER DEFAULT 0,
   is_preview BOOLEAN DEFAULT false,
+  is_published BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
