@@ -186,7 +186,7 @@ const LessonSection = ({
 			<div className="flex flex-col gap-4">
 				<Controller
 					control={control}
-					name={`lessons.${lessonIndex}.is_preview`}
+					name={`is_preview`}
 					render={({ field }) => (
 						<div className="flex items-center gap-2">
 							<Switch
@@ -200,7 +200,7 @@ const LessonSection = ({
 				
 				<Controller
 					control={control}
-					name={`lessons.${lessonIndex}.is_published`}
+					name={`is_published`}
 					render={({ field }) => (
 						<div className="flex items-center gap-2">
 							<Switch
@@ -234,7 +234,6 @@ export default function UpdateCourse() {
 		handleSubmit,
 		formState: { errors },
 		reset,
-		watch,
 	} = useForm({
 		resolver: zodResolver(courseSchema),
 		defaultValues: {
@@ -347,6 +346,54 @@ export default function UpdateCourse() {
 			setIsLoading(false);
 		}
 	};
+	
+	const onSubmitLessons = async (data) => {
+		setIsLoading(true);
+		setServerError("");
+		console.log(data)
+		
+		try {
+			const formData = new FormData();
+			
+			// Prepare lessons data
+			const lessonsData = data.lessons.map((lesson, idx) => ({
+				id: lesson.id, // For existing lessons
+				title: lesson.title,
+				content: lesson.content,
+				link: lesson.link,
+				order_index: lesson.order_index || idx + 1,
+				is_preview: lesson.is_preview,
+				is_published: lesson.is_published,
+			}));
+			
+			formData.append("lessons", JSON.stringify(lessonsData));
+			
+			// Handle lesson videos
+			data.lessons.forEach((lesson, index) => {
+				if (lesson.video_file instanceof File) {
+					formData.append(`lessonsVideo`, lesson.video_file);
+					formData.append(`lesson_video_indexes`, index.toString());
+				}
+			});
+			
+			const response = await instance.put(`/courses/${id}/lessons`, formData, {
+				headers: {
+					'Content-Type': 'multipart/form-data',
+				},
+			});
+			
+			if (response.status === 200) {
+				toast.success(`Lesson "${data.title}" updated successfully!`);
+				// navigate("/admin/courses");
+			}
+		} catch (error) {
+			const errorMessage = error.response?.data?.error || error.message;
+			setServerError(errorMessage);
+			toast.error("Failed to update course");
+		} finally {
+			setIsLoading(false);
+		}
+	}
 	
 	const handleTabChange = (value) => {
 		setActiveTab(value);
@@ -488,7 +535,7 @@ export default function UpdateCourse() {
 								{/* Pricing */}
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 									<div className="flex flex-col gap-2">
-										<Label>Price (in cents) *</Label>
+										<Label>Price *</Label>
 										<Input
 											type="number"
 											{...register("price_cents", { valueAsNumber: true })}
@@ -498,9 +545,6 @@ export default function UpdateCourse() {
 										{errors.price_cents && (
 											<p className="text-red-500 text-sm">{errors.price_cents.message}</p>
 										)}
-										<p className="text-sm text-gray-500">
-											Actual price: ${(watch('price_cents') / 100).toFixed(2)}
-										</p>
 									</div>
 									
 									<div className="flex flex-col gap-2">
@@ -653,6 +697,7 @@ export default function UpdateCourse() {
 								<Button
 									type="submit"
 									disabled={isLoading}
+									// onClick={() => console.log("test")}
 								>
 									{isLoading ? "Updating Course..." : "Update Course"}
 								</Button>

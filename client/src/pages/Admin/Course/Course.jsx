@@ -71,7 +71,7 @@ const Course = () => {
 								<Button
 									size="sm"
 									variant="outline"
-									onClick={() => navigate(`update-course/${course.id}`)}
+									onClick={() => navigate(`create-course/${course.id}`)}
 								>
 									Edit
 								</Button>

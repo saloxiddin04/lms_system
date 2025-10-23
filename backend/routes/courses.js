@@ -729,6 +729,155 @@ router.put('/:id', authenticate, authorizeRole('teacher', 'admin'), upload.singl
 	}
 });
 
+router.put(
+	'/full/:id',
+	authenticate,
+	authorizeRole('teacher', 'admin'),
+	upload.fields([
+		{ name: 'preview', maxCount: 1 },
+		{ name: 'lessonsVideo', maxCount: 50 }
+	]),
+	async (req, res) => {
+		try {
+			const { id } = req.params;
+			const { title, description, price_cents, currency, category, teacher, lessons, published } = req.body;
+			const files = req.files;
+			const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
+			
+			// Course mavjudligini tekshirish
+			const existingCourse = await db.query(
+				'SELECT * FROM courses WHERE id = $1',
+				[id]
+			);
+			
+			if (existingCourse.rows.length === 0) {
+				return res.status(404).json({ error: 'Course not found' });
+			}
+			
+			const course = existingCourse.rows[0];
+			
+			// Teacher huquqini tekshirish (faqat admin boshqa teacherlarni update qilishi mumkin)
+			let finalTeacherId = course.teacher;
+			if (req.user.role === 'admin' && teacher) {
+				finalTeacherId = teacher;
+			} else if (req.user.role === 'teacher' && course.teacher !== req.user.id) {
+				return res.status(403).json({ error: 'You can only update your own courses' });
+			}
+			
+			if (!category) return res.status(400).json({ error: 'Category is required' });
+			
+			// 1️⃣ Course yangilash
+			let previewImage = course.preview_image;
+			if (files.preview && files.preview[0]) {
+				previewImage = `/uploads/courses/${files.preview[0].filename}`;
+				// Eski preview imagenio'chirish kerak bo'lsa
+			}
+			
+			const courseUpdateQ = await db.query(
+				`UPDATE courses
+         SET title = $1, description = $2, teacher = $3, category = $4,
+             price_cents = $5, currency = $6, published = $7, preview_image = $8
+         WHERE id = $9 RETURNING *`,
+				[
+					title,
+					description,
+					finalTeacherId,
+					category,
+					price_cents || 0,
+					currency || 'usd',
+					published || false,
+					previewImage,
+					id
+				]
+			);
+			const updatedCourse = courseUpdateQ.rows[0];
+			
+			// 2️⃣ Lessons yangilash
+			// Avval mavjud lessonslarni olish
+			const existingLessons = await db.query(
+				'SELECT * FROM lessons WHERE course_id = $1 ORDER BY order_index',
+				[id]
+			);
+			
+			let videoIndex = 0;
+			
+			// Yangi lessons massivi bilan ishlash
+			for (let i = 0; i < lessonsArr.length; i++) {
+				const les = lessonsArr[i];
+				
+				// Video faylini aniqlash
+				let videoPath = null;
+				if (files?.lessonsVideo && files?.lessonsVideo[videoIndex]) {
+					videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
+					videoIndex++;
+				} else if (les.video_url) {
+					// Agar yangi video upload qilinmasa, mavjud video urlni saqlab qolish
+					videoPath = les.video_url;
+				}
+				
+				if (les.id) {
+					// Mavjud lessonni yangilash
+					const existingLesson = existingLessons.rows.find(l => l.id === les.id);
+					if (existingLesson) {
+						await db.query(
+							`UPDATE lessons
+               SET title = $1, content = $2, link = $3, order_index = $4,
+                   is_preview = $5, is_published = $6, video_url = $7
+               WHERE id = $8`,
+							[
+								les.title,
+								les.content,
+								les.link,
+								les.order_index || i + 1,
+								les.is_preview || false,
+								les.is_published || false,
+								videoPath,
+								les.id
+							]
+						);
+					}
+				} else {
+					// Yangi lesson qo'shish
+					await db.query(
+						`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+						[
+							id,
+							les.title,
+							les.content,
+							les.link,
+							les.order_index || i + 1,
+							les.is_preview || false,
+							les.is_published || false,
+							videoPath
+						]
+					);
+				}
+			}
+			
+			// 3️⃣ O'chirilgan lessonslarni aniqlash va o'chirish
+			const updatedLessonIds = lessonsArr.filter(les => les.id).map(les => les.id);
+			const lessonsToDelete = existingLessons.rows.filter(les => !updatedLessonIds.includes(les.id));
+			
+			for (const lessonToDelete of lessonsToDelete) {
+				await db.query('DELETE FROM lessons WHERE id = $1', [lessonToDelete.id]);
+				// Lesson videolarini file systemdan o'chirish kerak bo'lsa
+			}
+			
+			res.status(200).json({
+				message: 'Course with lessons updated successfully',
+				courseId: updatedCourse.id,
+				updatedLessons: lessonsArr.length,
+				deletedLessons: lessonsToDelete.length,
+			});
+			
+		} catch (err) {
+			console.error('Course update error:', err);
+			res.status(500).json({ error: err.message });
+		}
+	}
+);
+
 /**
  * PUT /courses/:id/progress
  */

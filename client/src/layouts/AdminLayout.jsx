@@ -34,6 +34,7 @@ const AdminLayout = () => {
 						
 						<Route path="courses" element={<Course/>}/>
 						<Route path="courses/create-course" element={<CreateCourse/>}/>
+						<Route path="courses/create-course/:id" element={<CreateCourse/>}/>
 						<Route path="courses/update-course/:id" element={<UpdateCourse/>}/>
 						
 						<Route path="courses/:courseId/lessons/:id" element={<CreateLessons/>}/>
