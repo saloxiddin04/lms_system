@@ -578,7 +578,7 @@ const courseSchema = z.object({
 	teacher: z.string().min(1, "Teacher is required"),
 });
 
-const LessonSection = ({control, register, lessonIndex, removeLesson, errors, isExistingLesson}) => (
+const LessonSection = ({control, register, lessonIndex, removeLesson, errors, isExistingLesson, editMode}) => (
 	<Card className="border border-gray-200 p-4 bg-white mb-4">
 		<CardHeader className="flex flex-row justify-between items-center p-0 pb-4">
 			<CardTitle className="text-lg">Lesson {lessonIndex + 1}</CardTitle>
@@ -586,7 +586,7 @@ const LessonSection = ({control, register, lessonIndex, removeLesson, errors, is
 				type="button"
 				variant="destructive"
 				size="sm"
-				disabled={isExistingLesson}
+				disabled={editMode}
 				onClick={() => removeLesson(lessonIndex)}
 			>
 				Remove
@@ -642,7 +642,8 @@ const LessonSection = ({control, register, lessonIndex, removeLesson, errors, is
 						value ? (
 							<div className="bg-gray-50 p-3 rounded-md">
 								<p className="text-sm text-gray-600 mb-2">Current Video:</p>
-								<a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline text-sm">{value}</a>
+								<a href={value} target="_blank" rel="noopener noreferrer"
+								   className="text-blue-600 hover:underline text-sm">{value}</a>
 							</div>
 						) : null
 					)}
@@ -654,7 +655,8 @@ const LessonSection = ({control, register, lessonIndex, removeLesson, errors, is
 					name={`lessons.${lessonIndex}.video`}
 					render={({field: {onChange, value}, fieldState: {error}}) => (
 						<div>
-							<Label className="text-sm text-gray-600">{isExistingLesson ? "Replace Video (Optional)" : "Upload Video *"}</Label>
+							<Label
+								className="text-sm text-gray-600">{editMode ? "Replace Video (Optional)" : "Upload Video *"}</Label>
 							<Input
 								type="file"
 								accept="video/*"
@@ -676,7 +678,7 @@ const LessonSection = ({control, register, lessonIndex, removeLesson, errors, is
 					name={`lessons.${lessonIndex}.is_preview`}
 					render={({field}) => (
 						<div className="flex items-center gap-2">
-							<Switch checked={field.value} onCheckedChange={field.onChange} />
+							<Switch checked={field.value} onCheckedChange={field.onChange}/>
 							<Label>Preview Lesson (Free access)</Label>
 						</div>
 					)}
@@ -687,7 +689,7 @@ const LessonSection = ({control, register, lessonIndex, removeLesson, errors, is
 					name={`lessons.${lessonIndex}.is_published`}
 					render={({field}) => (
 						<div className="flex items-center gap-2">
-							<Switch checked={field.value} onCheckedChange={field.onChange} />
+							<Switch checked={field.value} onCheckedChange={field.onChange}/>
 							<Label>Published</Label>
 						</div>
 					)}
@@ -822,11 +824,13 @@ export default function CreateCourse() {
 			if (response.status === (id ? 200 : 201)) {
 				toast.success(`Course \"${data.title}\" ${id ? "updated" : "created"} successfully!`);
 				navigate("/admin/courses");
+				reset()
 			}
 		} catch (error) {
 			setServerError(error.response?.data?.error || error.message || "An error occurred");
 		} finally {
 			setIsLoading(false);
+			reset()
 		}
 	};
 	
@@ -849,13 +853,14 @@ export default function CreateCourse() {
 					<CardContent className="space-y-4">
 						<div className="flex flex-col gap-1">
 							<Label>Course Title *</Label>
-							<Input {...register("title")} placeholder="Enter title" className={errors.title ? "border-red-500" : ""} />
+							<Input {...register("title")} placeholder="Enter title" className={errors.title ? "border-red-500" : ""}/>
 							{errors.title && <p className="text-red-500 text-sm">{errors.title.message}</p>}
 						</div>
 						
 						<div className="flex flex-col gap-1">
 							<Label>Description *</Label>
-							<Textarea {...register("description")} placeholder="Course description" rows={3} />
+							<Textarea {...register("description")} placeholder="Course description" rows={3}/>
+							{errors.description && <p className="text-red-500 text-sm">{errors.description.message}</p>}
 						</div>
 						
 						{/* Category & Teacher */}
@@ -868,7 +873,7 @@ export default function CreateCourse() {
 									render={({field}) => (
 										<Select value={field.value} onValueChange={field.onChange}>
 											<SelectTrigger className="w-full">
-												<SelectValue placeholder="Select a category" />
+												<SelectValue placeholder="Select a category"/>
 											</SelectTrigger>
 											<SelectContent>
 												<SelectGroup>
@@ -893,7 +898,7 @@ export default function CreateCourse() {
 										render={({field}) => (
 											<Select value={field.value} onValueChange={field.onChange}>
 												<SelectTrigger className="w-full">
-													<SelectValue placeholder="Select a teacher" />
+													<SelectValue placeholder="Select a teacher"/>
 												</SelectTrigger>
 												<SelectContent>
 													<SelectGroup>
@@ -913,8 +918,14 @@ export default function CreateCourse() {
 						
 						{/* Price, currency, published */}
 						<div className="grid grid-cols-2 gap-4">
-							<Input type="number" {...register("price_cents", {valueAsNumber: true})} placeholder="Price (cents)" />
-							<Input {...register("currency")} readOnly />
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="course-category">Price *</Label>
+								<Input type="number" {...register("price_cents", {valueAsNumber: true})} placeholder="Price (cents)"/>
+							</div>
+							<div className="flex flex-col gap-1">
+								<Label htmlFor="course-category">Currency *</Label>
+								<Input {...register("currency")} readOnly/>
+							</div>
 						</div>
 						
 						<div className="flex flex-col gap-2">
@@ -924,10 +935,11 @@ export default function CreateCourse() {
 								control={control}
 								render={({field}) => (
 									<div className="flex items-center gap-3 p-2 border rounded-lg">
-										<Switch checked={field.value} onCheckedChange={field.onChange} />
+										<Switch checked={field.value} onCheckedChange={field.onChange}/>
 										<div>
 											<Label className="font-medium">{field.value ? "Published" : "Draft"}</Label>
-											<p className="text-sm text-gray-500">{field.value ? "Course is visible to students" : "Course is hidden"}</p>
+											<p
+												className="text-sm text-gray-500">{field.value ? "Course is visible to students" : "Course is hidden"}</p>
 										</div>
 									</div>
 								)}
@@ -939,14 +951,18 @@ export default function CreateCourse() {
 							name="preview"
 							control={control}
 							render={({field: {onChange, value}}) => (
-								<div>
+								<div className="flex flex-col gap-1">
 									<Label>Preview Image</Label>
-									<Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0] ?? null)} />
+									<Input type="file" accept="image/*" onChange={(e) => onChange(e.target.files?.[0] ?? null)}/>
 									
-									{course?.preview_image && !value && (
+									{course?.preview_image && (
 										<div className="mt-2">
 											<p className="text-sm text-gray-600 mb-1">Current Image:</p>
-											<img src={instance.defaults.baseURL + course?.preview_image} alt="Current preview" className="h-56 w-56 object-cover rounded-md" />
+											<img
+												src={instance.defaults.baseURL + course?.preview_image}
+												alt="Current preview"
+												className="h-56 w-56 object-cover rounded-md"
+											/>
 										</div>
 									)}
 								</div>
@@ -968,11 +984,18 @@ export default function CreateCourse() {
 								removeLesson={removeLesson}
 								errors={errors}
 								isExistingLesson={!!lesson.id}
+								editMode={id}
 							/>
 						))}
 						<Button
 							type="button"
-							onClick={() => appendLesson({title: "", content: "", link: "", video: null, order_index: lessons.length + 1})}
+							onClick={() => appendLesson({
+								title: "",
+								content: "",
+								link: "",
+								video: null,
+								order_index: lessons.length + 1
+							})}
 						>
 							Add Lesson
 						</Button>

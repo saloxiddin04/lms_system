@@ -2,7 +2,6 @@ import React from 'react';
 import {Route, Routes} from "react-router-dom";
 import Course from "@/pages/Admin/Course/Course.jsx";
 import CreateCourse from "@/pages/Admin/Course/CreateCourse.jsx";
-import UpdateCourse from "@/pages/Admin/Course/UpdateCourse.jsx";
 import CreateLessons from "@/pages/Admin/Lessons/CreateLessons.jsx";
 import Category from "@/pages/Admin/Category/Category.jsx";
 import CreateCategory from "@/pages/Admin/Category/CreateCategory.jsx";
@@ -35,7 +34,6 @@ const AdminLayout = () => {
 						<Route path="courses" element={<Course/>}/>
 						<Route path="courses/create-course" element={<CreateCourse/>}/>
 						<Route path="courses/create-course/:id" element={<CreateCourse/>}/>
-						<Route path="courses/update-course/:id" element={<UpdateCourse/>}/>
 						
 						<Route path="courses/:courseId/lessons/:id" element={<CreateLessons/>}/>
 						

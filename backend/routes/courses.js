@@ -648,6 +648,8 @@ router.post(
 			let finalTeacherId = req.user.role === 'admin' && teacher ? teacher : req.user.id;
 			
 			if (!category) return res.status(400).json({ error: 'Category is required' });
+			if (!files?.preview) return res.status(400).json({ error: 'Preview image is required' });
+			if (!files?.lessonsVideo) return res.status(400).json({ error: 'Lessons video is required' });
 			
 			// 1️⃣ Course yaratish
 			const courseQ = await db.query(
