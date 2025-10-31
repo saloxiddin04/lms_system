@@ -43,7 +43,7 @@ const __dirname = path.dirname(__filename);
 // Fayllarni saqlash joyi va nomi
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		if (file.fieldname === "preview") {
+		if (file.fieldname === "preview_image") {
 			cb(null, 'uploads/courses'); // Course preview images
 		} else if (file.fieldname === "lessonsVideo") { // 🔥 To'g'rilandi
 			cb(null, 'uploads/lessons'); // Lesson videos
@@ -59,12 +59,12 @@ const storage = multer.diskStorage({
 
 // Faqat rasm va video fayllariga ruxsat
 const fileFilter = (req, file, cb) => {
-	if (file.fieldname === "preview" && file.mimetype.startsWith('image/')) {
+	if (file.fieldname === "preview_image" && file.mimetype.startsWith('image/')) {
 		cb(null, true);
 	} else if (file.fieldname === "lessonsVideo" && file.mimetype.startsWith('video/')) { // 🔥 To'g'rilandi
 		cb(null, true);
 	} else {
-		cb(new Error(`Invalid file type for field ${file.fieldname}. Expected: ${file.fieldname === 'preview' ? 'image' : 'video'}, got: ${file.mimetype}`), false);
+		cb(new Error(`Invalid file type for field ${file.fieldname}. Expected: ${file.fieldname === 'preview_image' ? 'image' : 'video'}, got: ${file.mimetype}`), false);
 	}
 };
 

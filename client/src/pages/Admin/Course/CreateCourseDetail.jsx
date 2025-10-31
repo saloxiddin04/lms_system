@@ -8,6 +8,8 @@ import {getCourseById} from "@/features/course/courseSlice.js";
 import Loader from "@/components/Loader.jsx";
 import DescriptionForm from "@/pages/Admin/Course/_components/description-form.jsx";
 import ImageForm from "@/pages/Admin/Course/_components/image-form.jsx";
+import CategoryForm from "@/pages/Admin/Course/_components/category-form.jsx";
+import {getCategories} from "@/features/category/categorySlice.js";
 
 const CreateCourseDetail = () => {
 	const dispatch = useDispatch()
@@ -16,8 +18,10 @@ const CreateCourseDetail = () => {
 	const {id} = useParams()
 	
 	const {course, loading} = useSelector((state) => state.course)
+	const {categories} = useSelector((state) => state.category)
 	
 	useEffect(() => {
+		dispatch(getCategories())
 		dispatch(getCourseById({id}))
 	}, [id, dispatch])
 	
@@ -65,6 +69,14 @@ const CreateCourseDetail = () => {
 					<ImageForm
 						initialData={course}
 						courseId={course?.id}
+					/>
+					<CategoryForm
+						initialData={course}
+						courseId={course?.id}
+						options={categories?.map((option) => ({
+							label: option?.name,
+							value: option?.id
+						}))}
 					/>
 				</div>
 			</div>

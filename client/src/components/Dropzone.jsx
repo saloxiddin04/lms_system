@@ -2,9 +2,9 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import {Upload, UploadCloudIcon, X} from "lucide-react";
 
-export default function Dropzone({ onFileSelect, label = "Faylni tashlang yoki tanlang" }) {
+export default function Dropzone({ onFileSelect, label = "Faylni tashlang yoki tanlang", onSubmit, accept }) {
 	const [file, setFile] = useState(null);
 	
 	const onDrop = useCallback((acceptedFiles) => {
@@ -18,10 +18,7 @@ export default function Dropzone({ onFileSelect, label = "Faylni tashlang yoki t
 	const { getRootProps, getInputProps, isDragActive } = useDropzone({
 		onDrop,
 		multiple: false,
-		accept: {
-			"image/*": [],
-			"application/pdf": [],
-		},
+		accept
 	});
 	
 	const removeFile = () => {
@@ -49,8 +46,23 @@ export default function Dropzone({ onFileSelect, label = "Faylni tashlang yoki t
 				) : (
 					<div className="flex flex-col items-center gap-2">
 						<p className="text-sm font-medium">{file.name}</p>
-						<Button variant="destructive" size="sm" onClick={removeFile}>
+						<Button
+							variant="destructive"
+							size="sm"
+							onClick={(e) => {
+								e.stopPropagation()
+								removeFile()
+							}}
+						>
 							<X className="w-4 h-4 mr-1" /> Remove
+						</Button>
+						<Button
+							onClick={(e) => {
+								e.stopPropagation()
+								onSubmit()
+							}}
+						>
+							<UploadCloudIcon className="w-4 h-4 mr-1" /> Upload
 						</Button>
 					</div>
 				)}
