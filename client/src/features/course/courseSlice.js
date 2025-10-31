@@ -29,10 +29,10 @@ export const createCourse = createAsyncThunk(
 	"course/createCourse",
 	async (formData, thunkAPI) => {
 		try {
-			const response = await instance.post("/courses/", formData, {
+			const response = await instance.post("/courses/course", formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
-			thunkAPI.dispatch(getCourses())
+			thunkAPI.dispatch(getCourseById({id: response?.data?.course?.id}))
 			return response.data;
 		} catch (e) {
 			return thunkAPI.rejectWithValue(e.response?.data || e.message);
@@ -44,10 +44,10 @@ export const updateCourse = createAsyncThunk(
 	"course/updateCourse",
 	async ({ id, formData }, thunkAPI) => {
 		try {
-			const response = await instance.put(`/courses/${id}`, formData, {
+			const response = await instance.patch(`/courses/${id}`, formData, {
 				headers: { "Content-Type": "multipart/form-data" },
 			});
-			thunkAPI.dispatch(getCourses())
+			thunkAPI.dispatch(getCourseById({id: response?.data?.id}))
 			return response.data;
 		} catch (e) {
 			return thunkAPI.rejectWithValue(e.response?.data || e.message);
@@ -95,7 +95,7 @@ const courseSlice = createSlice({
 				state.loading = true
 			})
 			.addCase(getCourses.fulfilled, (state, {payload}) => {
-				state.courses = payload
+				state.courses = payload?.reverse()
 				state.loading = false
 			})
 			.addCase(getCourses.rejected, (state) => {

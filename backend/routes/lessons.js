@@ -35,27 +35,51 @@ const {upload} = require("../middleware/upload")
 // 	}
 // })
 
+
+
 router.post(
-	'/chapters/:courseId/lessons',
+	'/:courseId/lessons',
 	authenticate,
 	authorizeRole('teacher','admin'),
-	upload.single('videos'), // bir nechta video
+	upload.fields([{ name: 'lessonsVideo', maxCount: 50 }]), // bir nechta video
 	async (req, res) => {
 		try {
-			const { chapterId } = req.params;
-			const { title, content, link, order_index, is_preview } = req.body;
+			const { courseId } = req.params;
+			const { lessons } = req.body;
+			const files = req.files;
+			const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
 			
-			const videoPath = req.file ? `/uploads/lessons/${req.file.filename}` : null;
+			if (!files?.lessonsVideo) return res.status(400).json({ error: 'Lessons video is required' });
 			
-			const q = await db.query(
-				`INSERT INTO lessons (course_id, chapter_id, title, content, video_url, link, order_index, is_preview)
-         SELECT c.course_id, $1, $2, $3, $4, $5, $6, $7
-         FROM chapters c WHERE c.id = $1
-         RETURNING *`,
-				[chapterId, title, content, videoPath, link, order_index || 0, is_preview || false]
-			);
+			let videoIndex = 0;
+			for (let i = 0; i < lessonsArr.length; i++) {
+				const les = lessonsArr[i];
+				let videoPath = null;
+				
+				if (files.lessonsVideo && files.lessonsVideo[videoIndex]) {
+					videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
+					videoIndex++;
+				}
+				
+				await db.query(
+					`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
+           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+					[
+						courseId,
+						les.title,
+						les.content,
+						les.link,
+						les.order_index || i + 1,
+						les.is_preview || false,
+						les.is_published || false,
+						videoPath
+					]
+				);
+			}
 			
-			res.status(201).json(q.rows[0]);
+			res.status(201).json({
+				message: "Lessons created successfully"
+			});
 		} catch (e) {
 			res.status(500).json({ error: e.message });
 		}

@@ -706,6 +706,38 @@ router.post(
 	}
 );
 
+router.post("/course", authenticate, authorizeRole('teacher', 'admin'), upload.fields([{ name: 'preview', maxCount: 1 }]), async (req, res) => {
+	try {
+		const { title, description, price_cents, currency, category, teacher } = req.body;
+		const files = req.files;
+		let finalTeacherId = req.user.role === 'admin' && teacher ? teacher : req.user.id;
+		
+		// if (!category) return res.status(400).json({ error: 'Category is required' });
+		// if (!files?.preview) return res.status(400).json({ error: 'Preview image is required' });
+		
+		const courseQ = await db.query(
+			`INSERT INTO courses (title, description, teacher, category, price_cents, currency, published, preview_image)
+         VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING *`,
+			[
+				title,
+				description,
+				finalTeacherId,
+				category,
+				price_cents || 0,
+				currency || 'usd',
+				files.preview ? `/uploads/courses/${files.preview[0].filename}` : null
+			]
+		);
+		
+		res.status(201).json({
+			message: "Course created successfully!",
+			course: courseQ.rows[0]
+		})
+	} catch (err) {
+		res.status(500).json({ error: err.message });
+	}
+})
+
 /**
  * PUT /courses/:id – kursni yangilash
  */
@@ -912,6 +944,93 @@ router.put('/:id/progress', authenticate, async (req, res) => {
 		res.status(500).json({ error: e.message });
 	}
 });
+
+router.patch('/:id', authenticate, authorizeRole('admin', 'teacher'), upload.none(), async (req, res) => {
+	try {
+		const id = req.params.id;
+		
+		// form-data ichidagi maydonlarni olib chiqamiz
+		const updates = req.body;
+		
+		if (!updates || Object.keys(updates).length === 0) {
+			return res.status(400).json({ error: "Hech qanday maydon yuborilmadi" });
+		}
+		
+		// allowed fields xavfsizligi
+		const allowed = ["title", "description", "price_cents", "published"];
+		const filtered = Object.fromEntries(
+			Object.entries(updates).filter(([key]) => allowed.includes(key))
+		);
+		
+		// qiymatlarni to‘g‘ri tiplarga aylantirish
+		if (filtered.price) filtered.price = parseFloat(filtered.price);
+		if (filtered.published) filtered.published = filtered.published === "true";
+		
+		const keys = Object.keys(filtered);
+		const values = Object.values(filtered);
+		
+		const setClause = keys.map((key, index) => `${key}=$${index + 1}`).join(", ");
+		
+		const query = `
+      UPDATE courses
+      SET ${setClause}
+      WHERE id=$${keys.length + 1}
+      RETURNING *;
+    `;
+		
+		const q = await db.query(query, [...values, id]);
+		
+		if (q.rows.length === 0) {
+			return res.status(404).json({ error: "Kurs topilmadi" });
+		}
+		
+		res.json(q.rows[0]);
+	} catch (e) {
+		console.error(e);
+		res.status(500).json({ error: e.message });
+	}
+});
+
+
+// router.patch('/:id', authenticate, authorizeRole('admin', 'teacher'), async (req, res) => {
+// 	try {
+// 		const updates = req.body;
+// 		const id = req.params.id;
+//
+// 		// Agar hech narsa yuborilmagan bo‘lsa
+// 		if (!updates || Object.keys(updates).length === 0) {
+// 			return res.status(400).json({ error: "Empty datas" });
+// 		}
+//
+// 		// Keylar va qiymatlar ajratamiz
+// 		const keys = Object.keys(updates); // ["title", "price", "published"]
+// 		const values = Object.values(updates); // ["React course", 49.99, true]
+//
+// 		// SQL SET qismi: "title=$1, price=$2, published=$3"
+// 		const setClause = keys.map((key, index) => `${key}=$${index + 1}`).join(", ");
+//
+// 		// So‘rovni tuzamiz
+// 		const query = `
+//       UPDATE courses
+//       SET ${setClause}
+//       WHERE id=$${keys.length + 1}
+//       RETURNING *;
+//     `;
+//
+// 		// So‘rovni bajarish
+// 		const q = await db.query(query, [...values, id]);
+//
+// 		if (q.rows.length === 0) {
+// 			return res.status(404).json({ error: "Course not found" });
+// 		}
+//
+// 		res.json(q.rows[0]);
+// 	} catch (e) {
+// 		console.error(e);
+// 		res.status(500).json({ error: e.message });
+// 	}
+// });
+
 
 /**
  * PATCH /courses/:id/publish – kursni publish/unpublish qilish

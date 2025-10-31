@@ -7,6 +7,8 @@ import Category from "@/pages/Admin/Category/Category.jsx";
 import CreateCategory from "@/pages/Admin/Category/CreateCategory.jsx";
 import Users from "@/pages/Admin/Users/Users.jsx";
 import UserDetail from "@/pages/Admin/Users/UserDetail.jsx";
+import Lessons from "@/pages/Admin/Lessons/Lessons.jsx";
+import CreateCourseDetail from "@/pages/Admin/Course/CreateCourseDetail.jsx";
 
 function Dashboard() {
 	return <h2>Dashboard</h2>
@@ -33,9 +35,10 @@ const AdminLayout = () => {
 						
 						<Route path="courses" element={<Course/>}/>
 						<Route path="courses/create-course" element={<CreateCourse/>}/>
-						<Route path="courses/create-course/:id" element={<CreateCourse/>}/>
+						<Route path="courses/create-course/:id" element={<CreateCourseDetail/>}/>
 						
-						<Route path="courses/:courseId/lessons/:id" element={<CreateLessons/>}/>
+						<Route path="lessons" element={<Lessons/>}/>
+						<Route path="lessons/create-lesson/:courseId" element={<CreateLessons/>}/>
 						
 						<Route path="category" element={<Category/>}/>
 						<Route path="category/:id" element={<CreateCategory/>}/>

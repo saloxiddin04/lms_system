@@ -15,6 +15,7 @@ const menuItems = {
 		{ to: "/admin/dashboard", label: "Dashboard" },
 		{ to: "/admin/users", label: "Users" },
 		{ to: "/admin/courses", label: "Courses" },
+		{ to: "/admin/lessons", label: "Lessons" },
 		{ to: "/admin/category", label: "Category" },
 	],
 };
