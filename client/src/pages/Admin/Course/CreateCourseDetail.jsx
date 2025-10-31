@@ -1,19 +1,19 @@
 import React, {useEffect} from 'react';
 import {useSelector, useDispatch} from "react-redux";
-import {useNavigate, useParams} from "react-router-dom";
+import {useParams} from "react-router-dom";
 import TitleForm from "@/pages/Admin/Course/_components/title-form.jsx";
 import {IconBadge} from "@/components/IconBadge.jsx";
-import {LayoutDashboard} from "lucide-react";
+import {LayoutDashboard, ListChecks, CircleDollarSign} from "lucide-react";
 import {getCourseById} from "@/features/course/courseSlice.js";
 import Loader from "@/components/Loader.jsx";
 import DescriptionForm from "@/pages/Admin/Course/_components/description-form.jsx";
 import ImageForm from "@/pages/Admin/Course/_components/image-form.jsx";
 import CategoryForm from "@/pages/Admin/Course/_components/category-form.jsx";
 import {getCategories} from "@/features/category/categorySlice.js";
+import PriceForm from "@/pages/Admin/Course/_components/price-form.jsx";
 
 const CreateCourseDetail = () => {
 	const dispatch = useDispatch()
-	const navigate = useNavigate()
 	
 	const {id} = useParams()
 	
@@ -78,6 +78,29 @@ const CreateCourseDetail = () => {
 							value: option?.id
 						}))}
 					/>
+				</div>
+				
+				<div className="space-y-6">
+					<div>
+						<div className="flex items-center gap-x-2">
+							<IconBadge icon={ListChecks}/>
+							<h2 className="text-xl">Course lessons</h2>
+						</div>
+						<div>
+							lessons
+						</div>
+					</div>
+					
+					<div>
+						<div className="flex items-center gap-x-2">
+							<IconBadge icon={CircleDollarSign}/>
+							<h2 className="text-xl">Cell your course</h2>
+						</div>
+						<PriceForm
+							initialData={course}
+							courseId={course?.id}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

@@ -968,13 +968,13 @@ router.patch(
 			}
 			
 			// ✅ Faqat ruxsat etilgan maydonlarni o‘tkazamiz
-			const allowed = ["title", "description", "price", "published", "preview_image", "category"];
+			const allowed = ["title", "description", "price_cents", "published", "preview_image", "category"];
 			const filtered = Object.fromEntries(
 				Object.entries(updates).filter(([key]) => allowed.includes(key))
 			);
 			
 			// ✅ String qiymatlarni tiplarga aylantirish
-			if (filtered.price) filtered.price = parseFloat(filtered.price);
+			if (filtered.price_cents) filtered.price_cents = parseFloat(filtered.price_cents);
 			if (filtered.published)
 				filtered.published =
 					filtered.published === "true" || filtered.published === true;
