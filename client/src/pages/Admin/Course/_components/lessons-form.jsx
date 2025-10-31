@@ -20,6 +20,7 @@ import {useDispatch} from "react-redux";
 import {createLesson, reorderLesson} from "@/features/course/lessonSlice.js";
 import {Input} from "@/components/ui/input.jsx";
 import LessonsList from "@/pages/Admin/Course/_components/lessons-list.jsx";
+import {useNavigate} from "react-router-dom";
 
 
 const formSchema = z.object({
@@ -28,6 +29,8 @@ const formSchema = z.object({
 
 const LessonsForm = ({initialData, courseId}) => {
 	const dispatch = useDispatch()
+	const navigate = useNavigate()
+	
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [isCreating, setIsCreating] = useState(false)
 	
@@ -130,7 +133,9 @@ const LessonsForm = ({initialData, courseId}) => {
 				>
 					{!initialData?.lessons?.length && "No lessons"}
 					<LessonsList
-						onEdit={() => {}}
+						onEdit={(id) => {
+							navigate(`lessons/${id}`)
+						}}
 						onReorder={onReorder}
 						items={initialData?.lessons || []}
 					/>
