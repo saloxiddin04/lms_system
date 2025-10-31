@@ -1,6 +1,5 @@
 import React, {useState} from 'react';
 import * as z from "zod"
-import axios from "axios";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 
@@ -45,8 +44,6 @@ const PriceForm = ({initialData, courseId}) => {
 			}
 		})
 	}
-	
-	console.log(initialData)
 	
 	return (
 		<div className="mt-6 border bg-slate-100 rounded-md p-4">

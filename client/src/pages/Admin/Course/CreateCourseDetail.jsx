@@ -11,6 +11,7 @@ import ImageForm from "@/pages/Admin/Course/_components/image-form.jsx";
 import CategoryForm from "@/pages/Admin/Course/_components/category-form.jsx";
 import {getCategories} from "@/features/category/categorySlice.js";
 import PriceForm from "@/pages/Admin/Course/_components/price-form.jsx";
+import LessonsForm from "@/pages/Admin/Course/_components/lessons-form.jsx";
 
 const CreateCourseDetail = () => {
 	const dispatch = useDispatch()
@@ -30,14 +31,15 @@ const CreateCourseDetail = () => {
 		course?.description,
 		course?.preview_image,
 		course?.price_cents,
-		course?.category?.id
+		course?.category?.id,
+		course?.lessons?.some(lesson => lesson?.is_published)
 	]
 	const totalFields = requiredFields.length
 	const completedFields = requiredFields.filter(Boolean).length
 	
 	const completionText = `(${completedFields}/${totalFields})`
 	
-	if (loading) return <Loader />
+	// if (loading) return <Loader />
 	
 	return (
 		<div>
@@ -86,9 +88,10 @@ const CreateCourseDetail = () => {
 							<IconBadge icon={ListChecks}/>
 							<h2 className="text-xl">Course lessons</h2>
 						</div>
-						<div>
-							lessons
-						</div>
+						<LessonsForm
+							initialData={course}
+							courseId={course?.id}
+						/>
 					</div>
 					
 					<div>

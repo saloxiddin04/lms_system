@@ -1,7 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const db = require('../db')
-const { authenticate, authorizeRole } = require('../middleware/auth')
+const {authenticate, authorizeRole} = require('../middleware/auth')
 const {upload} = require("../middleware/upload")
 
 // create lesson (chapter) inside course
@@ -36,56 +36,167 @@ const {upload} = require("../middleware/upload")
 // })
 
 
-
 router.post(
-	'/:courseId/lessons',
+	'/:courseId/lesson',
 	authenticate,
-	authorizeRole('teacher','admin'),
-	upload.fields([{ name: 'lessonsVideo', maxCount: 50 }]), // bir nechta video
+	authorizeRole('teacher', 'admin'),
+	upload.fields([{name: 'lessonsVideo', maxCount: 50}]), // bir nechta video
 	async (req, res) => {
 		try {
-			const { courseId } = req.params;
-			const { lessons } = req.body;
+			const {courseId} = req.params;
+			const {title, content, link, order_index, is_preview, is_published, video_url} = req.body;
 			const files = req.files;
-			const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
 			
-			if (!files?.lessonsVideo) return res.status(400).json({ error: 'Lessons video is required' });
-			
-			let videoIndex = 0;
-			for (let i = 0; i < lessonsArr.length; i++) {
-				const les = lessonsArr[i];
-				let videoPath = null;
-				
-				if (files.lessonsVideo && files.lessonsVideo[videoIndex]) {
-					videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
-					videoIndex++;
-				}
-				
-				await db.query(
-					`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-					[
-						courseId,
-						les.title,
-						les.content,
-						les.link,
-						les.order_index || i + 1,
-						les.is_preview || false,
-						les.is_published || false,
-						videoPath
-					]
-				);
-			}
+			const lessonQ = await db.query(
+				`INSERT INTO lessons(title, content, link, order_index, is_preview, is_published, video_url, course_id) VALUES($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+				[
+					title,
+					content,
+					link,
+					order_index,
+					is_preview || false,
+					is_published || false,
+					files?.lessonsVideo ? `/uploads/lessons/${files.lessonsVideo[0].filename}` : null,
+					courseId
+				]
+			)
 			
 			res.status(201).json({
-				message: "Lessons created successfully"
-			});
+				message: "Lesson created successfully!",
+				lesson: lessonQ.rows[0]
+			})
+			
+			// const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
+			
+			// if (!files?.lessonsVideo) return res.status(400).json({ error: 'Lessons video is required' });
+			
+			// let videoIndex = 0;
+			// for (let i = 0; i < lessonsArr.length; i++) {
+			// 	const les = lessonsArr[i];
+			// 	let videoPath = null;
+			//
+			// 	if (files.lessonsVideo && files.lessonsVideo[videoIndex]) {
+			// 		videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
+			// 		videoIndex++;
+			// 	}
+			//
+			// 	await db.query(
+			// 		`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
+			//      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			// 		[
+			// 			courseId,
+			// 			les.title,
+			// 			les.content,
+			// 			les.link,
+			// 			les.order_index || i + 1,
+			// 			les.is_preview || false,
+			// 			les.is_published || false,
+			// 			videoPath
+			// 		]
+			// 	);
+			// }
+			//
+			// res.status(201).json({
+			// 	message: "Lessons created successfully"
+			// });
 		} catch (e) {
-			res.status(500).json({ error: e.message });
+			res.status(500).json({error: e.message});
 		}
 	}
 );
 
+// router.put("/:courseId/lesson/reorder", authenticate, authorizeRole('admin', 'teacher'), upload.none(), async (req, res) => {
+// 	try {
+// 		const {courseId} = req.params;
+// 		const {
+// 			id,
+// 			title,
+// 			content,
+// 			link,
+// 			order_index,
+// 			is_preview,
+// 			video_url,
+// 		} = req.body;
+//
+// 		// Avval mavjud darsni topamiz
+// 		const lessonQ = await db.query(
+// 			"SELECT * FROM lessons WHERE id = $1 AND course_id = $2",
+// 			[id, courseId]
+// 		);
+//
+// 		if (!lessonQ.rows[0]) {
+// 			return res.status(404).json({error: "Lesson not found"});
+// 		}
+//
+// 		const lesson = lessonQ.rows[0];
+//
+// 		// 🔁 Yangilash
+// 		const q = await db.query(
+// 			`
+//         UPDATE lessons
+//         SET
+//           title = $1,
+//           content = $2,
+//           video_url = $3,
+//           link = $4,
+//           order_index = $5,
+//           is_preview = $6
+//         WHERE id = $7 AND course_id = $8
+//         RETURNING *
+//         `,
+// 			[
+// 				title || lesson.title,
+// 				content || lesson.content,
+// 				video_url || lesson.video_url,
+// 				link || lesson.link,
+// 				order_index ?? lesson.order_index,
+// 				is_preview ?? lesson.is_preview,
+// 				id,
+// 				courseId,
+// 			]
+// 		);
+//
+// 		res.status(200).json({
+// 			message: "Lesson updated successfully",
+// 			lesson: q.rows[0],
+// 		});
+// 	} catch (e) {
+// 		res.status(500).json({error: e.message});
+// 	}
+// })
+
+router.put(
+	"/:courseId/lesson/reorder",
+	authenticate,
+	authorizeRole("admin", "teacher"),
+	async (req, res) => {
+		try {
+			const { courseId } = req.params;
+			const lessons = req.body;
+			
+			if (!Array.isArray(lessons) || lessons.length === 0) {
+				return res.status(400).json({ error: "Invalid lessons data" });
+			}
+			
+			// 🔁 Har bir lesson uchun tartibni yangilaymiz
+			const updatePromises = lessons.map((lesson) => {
+				return db.query(
+					`UPDATE lessons
+           SET order_index = $1
+           WHERE id = $2 AND course_id = $3`,
+					[lesson.order_index, lesson.id, courseId]
+				);
+			});
+			
+			await Promise.all(updatePromises);
+			
+			res.status(200).json({ message: "Lessons reordered successfully" });
+		} catch (e) {
+			console.error("Lesson reorder error:", e);
+			res.status(500).json({ error: e.message });
+		}
+	}
+);
 
 // update lesson
 router.put(
@@ -95,13 +206,13 @@ router.put(
 	upload.single('video_url'),
 	async (req, res) => {
 		try {
-			const { id } = req.params;
-			const { title, content, link, order_index, is_preview } = req.body;
+			const {id} = req.params;
+			const {title, content, link, order_index, is_preview} = req.body;
 			
 			// darsni olish
 			const lessonQ = await db.query('SELECT * FROM lessons WHERE id=$1', [id]);
 			const lesson = lessonQ.rows[0];
-			if (!lesson) return res.status(404).json({ error: 'Lesson not found' });
+			if (!lesson) return res.status(404).json({error: 'Lesson not found'});
 			
 			// kursni tekshirish (ownership)
 			const courseQ = await db.query('SELECT * FROM courses WHERE id=$1', [
@@ -109,13 +220,13 @@ router.put(
 			]);
 			const course = courseQ.rows[0];
 			if (!course)
-				return res.status(404).json({ error: 'Course not found' });
+				return res.status(404).json({error: 'Course not found'});
 			
 			if (
 				req.user.role !== 'admin' &&
 				req.user.id !== course.teacher_id
 			) {
-				return res.status(403).json({ error: 'Forbidden' });
+				return res.status(403).json({error: 'Forbidden'});
 			}
 			
 			let videoPath = lesson.video_url; // eski yo‘lni saqlab turamiz
@@ -151,16 +262,16 @@ router.put(
 			
 			res.status(200).json(q.rows[0]);
 		} catch (e) {
-			res.status(500).json({ error: e.message });
+			res.status(500).json({error: e.message});
 		}
 	}
 );
 
 // delete
-router.delete('/lessons/:id', authenticate, async (req,res)=>{
+router.delete('/lessons/:id', authenticate, async (req, res) => {
 	try {
 		await db.query('DELETE FROM lessons WHERE id=$1', [req.params.id])
-		res.status(204).json({ ok:true })
+		res.status(204).json({ok: true})
 	} catch (e) {
 		res.status(500).json({error: e.message})
 	}

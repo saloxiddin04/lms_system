@@ -574,7 +574,7 @@ router.get('/:id', authenticate, async (req, res) => {
 		
 		// 📚 Darslarni olish
 		const lessonsQ = await db.query(`
-      SELECT id, title, content, video_url, link, order_index, is_preview, is_published
+      SELECT *
       FROM lessons
       WHERE course_id = $1
       ORDER BY order_index ASC
@@ -954,8 +954,6 @@ router.patch(
 		try {
 			const id = req.params.id;
 			const updates = req.body;
-			
-			console.log("req", req)
 			
 			// Fayl bo'lsa, unga path qo'shamiz
 			if (req.file) {
