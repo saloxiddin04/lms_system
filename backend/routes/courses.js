@@ -1004,47 +1004,6 @@ router.patch(
 	}
 );
 
-
-// router.patch('/:id', authenticate, authorizeRole('admin', 'teacher'), async (req, res) => {
-// 	try {
-// 		const updates = req.body;
-// 		const id = req.params.id;
-//
-// 		// Agar hech narsa yuborilmagan bo‘lsa
-// 		if (!updates || Object.keys(updates).length === 0) {
-// 			return res.status(400).json({ error: "Empty datas" });
-// 		}
-//
-// 		// Keylar va qiymatlar ajratamiz
-// 		const keys = Object.keys(updates); // ["title", "price", "published"]
-// 		const values = Object.values(updates); // ["React course", 49.99, true]
-//
-// 		// SQL SET qismi: "title=$1, price=$2, published=$3"
-// 		const setClause = keys.map((key, index) => `${key}=$${index + 1}`).join(", ");
-//
-// 		// So‘rovni tuzamiz
-// 		const query = `
-//       UPDATE courses
-//       SET ${setClause}
-//       WHERE id=$${keys.length + 1}
-//       RETURNING *;
-//     `;
-//
-// 		// So‘rovni bajarish
-// 		const q = await db.query(query, [...values, id]);
-//
-// 		if (q.rows.length === 0) {
-// 			return res.status(404).json({ error: "Course not found" });
-// 		}
-//
-// 		res.json(q.rows[0]);
-// 	} catch (e) {
-// 		console.error(e);
-// 		res.status(500).json({ error: e.message });
-// 	}
-// });
-
-
 /**
  * PATCH /courses/:id/publish – kursni publish/unpublish qilish
  */

@@ -14,16 +14,17 @@ import {
 
 import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {Pencil} from "lucide-react";
+import {Loader2, Pencil} from "lucide-react";
 import toast from "react-hot-toast";
-import {useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {updateCourse} from "@/features/course/courseSlice.js";
+import {updateLesson} from "@/features/course/lessonSlice.js";
 
 const formSchema = z.object({
 	title: z.string().min(1, {message: "Title is required!"})
 })
 
-const TitleForm = ({initialData, courseId}) => {
+const LessonTitleForm = ({initialData, courseId, lessonId}) => {
 	const dispatch = useDispatch()
 	const [isEditing, setIsEditing] = useState(false)
 	
@@ -37,9 +38,9 @@ const TitleForm = ({initialData, courseId}) => {
 	const {isSubmitting, isValid} = form.formState
 	
 	const onSubmit = async (data) => {
-		await dispatch(updateCourse({id: courseId, formData: data})).then(({payload}) => {
+		await dispatch(updateLesson({id: lessonId, data})).then(({payload}) => {
 			if (payload) {
-				toast.success("Course updated")
+				toast.success("Lesson updated")
 				toggleEdit()
 			}
 		})
@@ -48,14 +49,14 @@ const TitleForm = ({initialData, courseId}) => {
 	return (
 		<div className="mt-6 border bg-slate-100 rounded-md p-4">
 			<div className="font-medium flex items-center justify-between">
-				Course title
+				Lesson title
 				<Button onClick={toggleEdit} variant="ghost">
 					{isEditing ? (
 						<>Cancel</>
 					) : (
 						<>
 							<Pencil className="w-4 h-4 mr-2"/>
-							Edit title
+							Lesson title
 						</>
 					)}
 				</Button>
@@ -79,7 +80,7 @@ const TitleForm = ({initialData, courseId}) => {
 									<FormControl>
 										<Input
 											disabled={isSubmitting}
-											placeholder="e.g. 'Advanced web development'"
+											placeholder="e.g. 'Introduction for course'"
 											{...field}
 										/>
 									</FormControl>
@@ -102,4 +103,4 @@ const TitleForm = ({initialData, courseId}) => {
 	);
 };
 
-export default TitleForm;
+export default LessonTitleForm;

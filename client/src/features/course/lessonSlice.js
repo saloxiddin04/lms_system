@@ -2,6 +2,18 @@ import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import instance from "@/utils/axios.js";
 import {getCourseById} from "@/features/course/courseSlice.js";
 
+export const getLessonById = createAsyncThunk(
+	"lesson/getLessonById",
+	async ({id}, thunkAPI) => {
+		try {
+			const response = await instance.get(`/lessons/${id}`)
+			return response.data
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.response?.data || e.message);
+		}
+	}
+)
+
 export const createLesson = createAsyncThunk(
 	"lesson/createLesson",
 	async ({formData, courseId}, thunkAPI) => {
@@ -11,6 +23,21 @@ export const createLesson = createAsyncThunk(
 			});
 			thunkAPI.dispatch(getCourseById({id: courseId}))
 			return response.data;
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.response?.data || e.message);
+		}
+	}
+)
+
+export const updateLesson = createAsyncThunk(
+	"lesson/updateLesson",
+	async ({id, data}, thunkAPI) => {
+		try {
+			const response = await instance.patch(`/lessons/${id}`, data, {
+				headers: {"Content-type": "multipart/form-data"}
+			})
+			thunkAPI.dispatch(getLessonById({id}))
+			return response.data
 		} catch (e) {
 			return thunkAPI.rejectWithValue(e.response?.data || e.message);
 		}
@@ -38,6 +65,20 @@ const lessonSlice = createSlice({
 		lesson: null
 	},
 	extraReducers: (builder) => {
+		// getLessonById
+		builder
+			.addCase(getLessonById.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(getLessonById.fulfilled, (state, {payload}) => {
+				state.lesson = payload
+				state.loading = false
+			})
+			.addCase(getLessonById.rejected, (state) => {
+				state.loading = false
+			})
+		
+		// createLesson
 		builder
 			.addCase(createLesson.pending, (state) => {
 				state.loading = true
@@ -46,6 +87,18 @@ const lessonSlice = createSlice({
 				state.loading = false
 			})
 			.addCase(createLesson.rejected, (state) => {
+				state.loading = false
+			})
+		
+		// updateLesson
+		builder
+			.addCase(updateLesson.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(updateLesson.fulfilled, (state) => {
+				state.loading = false
+			})
+			.addCase(updateLesson.rejected, (state) => {
 				state.loading = false
 			})
 		

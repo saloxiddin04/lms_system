@@ -1,11 +1,5 @@
 import React, {useState} from 'react';
-import * as z from "zod"
-import axios from "axios";
-import {zodResolver} from "@hookform/resolvers/zod";
-import {useForm} from "react-hook-form";
-
 import Dropzone from "@/components/Dropzone.jsx";
-
 
 import {Button} from "@/components/ui/button";
 import {ImageIcon, Pencil, PlusCircle} from "lucide-react";
@@ -13,10 +7,6 @@ import instance from "@/utils/axios.js";
 import {useDispatch} from "react-redux";
 import {updateCourse} from "@/features/course/courseSlice.js";
 import toast from "react-hot-toast";
-
-const formSchema = z.object({
-	preview_image: z.string().min(1, {message: "Image is required!"})
-})
 
 const ImageForm = ({initialData, courseId}) => {
 	const dispatch = useDispatch()
@@ -26,24 +16,14 @@ const ImageForm = ({initialData, courseId}) => {
 	
 	const toggleEdit = () => setIsEditing((current) => !current)
 	
-	const form = useForm<z.infer<typeof formSchema>>({
-		resolver: zodResolver(formSchema),
-		defaultValues: {
-			preview_image: initialData?.preview_image || ""
-		}
-	})
-	
 	const onSubmit = () => {
 		const formData = new FormData()
 		formData.append("preview_image", file)
 		
-		for (const pair of formData.entries()) {
-			console.log(pair[0], pair[1]); // <-- console’da preview_image chiqyaptimi?
-		}
-		
 		dispatch(updateCourse({id: courseId, formData})).then(({payload}) => {
 			if (payload) {
 				toast.success("Course updated")
+				toggleEdit()
 			}
 		})
 	}
