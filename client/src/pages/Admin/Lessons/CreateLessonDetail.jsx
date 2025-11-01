@@ -1,11 +1,13 @@
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {Link, useParams} from "react-router-dom";
-import {ArrowLeft, LayoutDashboard} from "lucide-react";
+import {ArrowLeft, LayoutDashboard, Eye} from "lucide-react";
 import {IconBadge} from "@/components/IconBadge.jsx";
 import {getLessonById} from "@/features/course/lessonSlice.js";
 import LessonTitleForm from "@/pages/Admin/Lessons/_components/lesson-title-form.jsx";
 import Loader from "@/components/Loader.jsx";
+import LessonContentForm from "@/pages/Admin/Lessons/_components/lesson-content-form.jsx";
+import LessonAccessSettings from "@/pages/Admin/Lessons/_components/lesson-access-settings.jsx";
 
 const CreateLessonDetail = () => {
 	const dispatch = useDispatch()
@@ -51,16 +53,32 @@ const CreateLessonDetail = () => {
 			</div>
 			
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-16">
-				<div>
-					<div className="flex items-center gap-x-2">
-						<IconBadge icon={LayoutDashboard}/>
-						<h2 className="text-xl">Customize your lesson</h2>
+				<div className="space-y-4">
+					<div>
+						<div className="flex items-center gap-x-2">
+							<IconBadge icon={LayoutDashboard}/>
+							<h2 className="text-xl">Customize your lesson</h2>
+						</div>
+						<LessonTitleForm
+							initialData={lesson}
+							lessonId={id}
+						/>
+						<LessonContentForm
+							initialData={lesson}
+							lessonId={id}
+						/>
 					</div>
-					<LessonTitleForm
-						initialData={lesson}
-						courseId={courseId}
-						lessonId={id}
-					/>
+					
+					<div>
+						<div className="flex items-center gap-x-2">
+							<IconBadge icon={Eye}/>
+							<h2 className="text-xl">Access settings</h2>
+						</div>
+						<LessonAccessSettings
+							initialData={lesson}
+							lessonId={id}
+						/>
+					</div>
 				</div>
 			</div>
 		</div>

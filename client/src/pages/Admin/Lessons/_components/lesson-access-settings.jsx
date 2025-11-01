@@ -1,41 +1,50 @@
-import React, {useState} from 'react';
+import React from 'react';
+import {useEffect, useState} from "react";
 import * as z from "zod"
-import axios from "axios";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 
 import {
 	Form,
-	FormControl,
+	FormControl, FormDescription,
 	FormField,
 	FormItem,
 	FormMessage
 } from "@/components/ui/form";
-
-import {Input} from "@/components/ui/input";
-import {Button} from "@/components/ui/button";
-import {Loader2, Pencil} from "lucide-react";
-import toast from "react-hot-toast";
-import {useDispatch, useSelector} from "react-redux";
-import {updateCourse} from "@/features/course/courseSlice.js";
+import {useDispatch} from "react-redux";
 import {updateLesson} from "@/features/course/lessonSlice.js";
+import toast from "react-hot-toast";
+import {Button} from "@/components/ui/button.jsx";
+import {Pencil} from "lucide-react";
+import {cn} from "@/lib/utils.js";
+import Preview from "@/components/Preview.jsx";
+import Editor from "@/components/Editor.jsx";
+import {Switch} from "@/components/ui/switch.jsx";
 
 const formSchema = z.object({
-	title: z.string().min(1, {message: "Title is required!"})
+	is_preview: z.boolean().default(false)
 })
 
-const LessonTitleForm = ({initialData, lessonId}) => {
+const LessonAccessSettings = ({initialData, lessonId}) => {
+	
 	const dispatch = useDispatch()
+	
 	const [isEditing, setIsEditing] = useState(false)
 	
 	const toggleEdit = () => setIsEditing((current) => !current)
-
+	
 	const form = useForm({
 		resolver: zodResolver(formSchema),
-		defaultValues: initialData
+		defaultValues: {
+			is_preview: !!initialData?.is_preview
+		}
 	})
 	
 	const {isSubmitting, isValid} = form.formState
+	
+	useEffect(() => {
+		form.reset(initialData);
+	}, [initialData, form]);
 	
 	const onSubmit = async (data) => {
 		await dispatch(updateLesson({id: lessonId, data})).then(({payload}) => {
@@ -49,21 +58,30 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 	return (
 		<div className="mt-6 border bg-slate-100 rounded-md p-4">
 			<div className="font-medium flex items-center justify-between">
-				Lesson title
+				Lesson access
 				<Button onClick={toggleEdit} variant="ghost">
 					{isEditing ? (
 						<>Cancel</>
 					) : (
 						<>
 							<Pencil className="w-4 h-4 mr-2"/>
-							Lesson title
+							Edit access
 						</>
 					)}
 				</Button>
 			</div>
 			{!isEditing && (
-				<p className="text-sm mt-2">
-					{initialData?.title}
+				<p
+					className={cn(
+						"text-sm mt-2",
+						!initialData?.is_preview && "text-slate-500 italic"
+					)}
+				>
+					{initialData?.is_preview ? (
+						<>This lesson is free for preview.</>
+					) : (
+						<>This lesson is not free.</>
+					)}
 				</p>
 			)}
 			{isEditing && (
@@ -74,17 +92,17 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 					>
 						<FormField
 							control={form.control}
-							name="title"
+							name="is_preview"
 							render={({field}) => (
-								<FormItem>
+								<FormItem className={"flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"}>
 									<FormControl>
-										<Input
-											disabled={isSubmitting}
-											placeholder="e.g. 'Introduction for course'"
-											{...field}
-										/>
+										<Switch checked={field.value} onCheckedChange={field.onChange}/>
 									</FormControl>
-									<FormMessage/>
+									<div className="space-y-1 leading-none">
+										<FormDescription>
+											Check this box if you want to make this lesson free for preview
+										</FormDescription>
+									</div>
 								</FormItem>
 							)}
 						/>
@@ -103,4 +121,4 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 	);
 };
 
-export default LessonTitleForm;
+export default LessonAccessSettings;

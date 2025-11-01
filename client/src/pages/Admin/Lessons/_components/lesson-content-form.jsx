@@ -1,6 +1,5 @@
-import React, {useState} from 'react';
+import {useEffect, useState} from "react";
 import * as z from "zod"
-import axios from "axios";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {useForm} from "react-hook-form";
 
@@ -12,30 +11,36 @@ import {
 	FormMessage
 } from "@/components/ui/form";
 
-import {Input} from "@/components/ui/input";
 import {Button} from "@/components/ui/button";
-import {Loader2, Pencil} from "lucide-react";
+import {Pencil} from "lucide-react";
 import toast from "react-hot-toast";
-import {useDispatch, useSelector} from "react-redux";
-import {updateCourse} from "@/features/course/courseSlice.js";
+import {cn} from "@/lib/utils";
+import {useDispatch} from "react-redux";
 import {updateLesson} from "@/features/course/lessonSlice.js";
+import Editor from "@/components/Editor.jsx";
+import Preview from "@/components/Preview.jsx";
 
 const formSchema = z.object({
-	title: z.string().min(1, {message: "Title is required!"})
+	content: z.string().min(1, {message: "Content is required!"})
 })
 
-const LessonTitleForm = ({initialData, lessonId}) => {
+const LessonContentForm = ({initialData, lessonId}) => {
 	const dispatch = useDispatch()
+	
 	const [isEditing, setIsEditing] = useState(false)
 	
 	const toggleEdit = () => setIsEditing((current) => !current)
-
+	
 	const form = useForm({
 		resolver: zodResolver(formSchema),
 		defaultValues: initialData
 	})
 	
 	const {isSubmitting, isValid} = form.formState
+	
+	useEffect(() => {
+		form.reset(initialData);
+	}, [initialData, form]);
 	
 	const onSubmit = async (data) => {
 		await dispatch(updateLesson({id: lessonId, data})).then(({payload}) => {
@@ -49,22 +54,30 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 	return (
 		<div className="mt-6 border bg-slate-100 rounded-md p-4">
 			<div className="font-medium flex items-center justify-between">
-				Lesson title
+				Lesson content
 				<Button onClick={toggleEdit} variant="ghost">
 					{isEditing ? (
 						<>Cancel</>
 					) : (
 						<>
 							<Pencil className="w-4 h-4 mr-2"/>
-							Lesson title
+							Edit content
 						</>
 					)}
 				</Button>
 			</div>
 			{!isEditing && (
-				<p className="text-sm mt-2">
-					{initialData?.title}
-				</p>
+				<div
+					className={cn(
+						"text-sm mt-2",
+						!initialData?.content && "text-slate-500 italic"
+					)}
+				>
+					{!initialData?.content && "No description"}
+					{initialData?.content && (
+						<Preview value={initialData?.content} />
+					)}
+				</div>
 			)}
 			{isEditing && (
 				<Form {...form}>
@@ -74,13 +87,11 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 					>
 						<FormField
 							control={form.control}
-							name="title"
+							name="content"
 							render={({field}) => (
 								<FormItem>
 									<FormControl>
-										<Input
-											disabled={isSubmitting}
-											placeholder="e.g. 'Introduction for course'"
+										<Editor
 											{...field}
 										/>
 									</FormControl>
@@ -103,4 +114,4 @@ const LessonTitleForm = ({initialData, lessonId}) => {
 	);
 };
 
-export default LessonTitleForm;
+export default LessonContentForm;
