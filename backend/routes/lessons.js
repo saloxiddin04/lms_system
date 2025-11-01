@@ -149,7 +149,7 @@ router.patch(
 	'/:id',
 	authenticate,
 	authorizeRole('teacher', 'admin'),
-	upload.single('video_url'),
+	upload.single('lessonsVideo'),
 	async (req, res) => {
 		try {
 			const {id} = req.params;

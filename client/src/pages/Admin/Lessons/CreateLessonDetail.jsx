@@ -1,13 +1,14 @@
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {Link, useParams} from "react-router-dom";
-import {ArrowLeft, LayoutDashboard, Eye} from "lucide-react";
+import {ArrowLeft, LayoutDashboard, Eye, Video} from "lucide-react";
 import {IconBadge} from "@/components/IconBadge.jsx";
 import {getLessonById} from "@/features/course/lessonSlice.js";
 import LessonTitleForm from "@/pages/Admin/Lessons/_components/lesson-title-form.jsx";
 import Loader from "@/components/Loader.jsx";
 import LessonContentForm from "@/pages/Admin/Lessons/_components/lesson-content-form.jsx";
 import LessonAccessSettings from "@/pages/Admin/Lessons/_components/lesson-access-settings.jsx";
+import LessonVideoForm from "@/pages/Admin/Lessons/_components/lesson-video-form.jsx";
 
 const CreateLessonDetail = () => {
 	const dispatch = useDispatch()
@@ -79,6 +80,17 @@ const CreateLessonDetail = () => {
 							lessonId={id}
 						/>
 					</div>
+				</div>
+				
+				<div>
+					<div className="flex items-center gap-x-2">
+						<IconBadge icon={Video} />
+						<h2 className="text-xl">Add a video</h2>
+					</div>
+					<LessonVideoForm
+						initialData={lesson}
+						lessonId={id}
+					/>
 				</div>
 			</div>
 		</div>
