@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 const menuItems = {
 	student: [
 		{ to: "/student/dashboard", label: "Dashboard" },
-		{ to: "/student/courses", label: "My Courses" },
+		{ to: "/student/my-courses", label: "My Courses" },
 	],
 	teacher: [
 		{ to: "/teacher/dashboard", label: "Dashboard" },
@@ -25,7 +25,7 @@ export default function Sidebar({ role }) {
 	const items = menuItems[role] || [];
 	
 	return (
-		<aside className="fixed top-[56px] left-0 h-[calc(100vh-56px)] w-64 bg-white border-r p-4 z-40">
+		<aside className="fixed top-[56px] left-0 h-[calc(100vh-56px)] w-64 bg-white border-r p-4 z-40 overflow-y-auto">
 			<nav className="flex flex-col gap-2">
 				{items.map((item) => (
 					<Link

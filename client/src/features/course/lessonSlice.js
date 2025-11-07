@@ -1,6 +1,6 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import instance from "@/utils/axios.js";
-import {getCourseById} from "@/features/course/courseSlice.js";
+import {getCourseById, getCourses} from "@/features/course/courseSlice.js";
 
 export const getLessonById = createAsyncThunk(
 	"lesson/getLessonById",
@@ -57,6 +57,19 @@ export const reorderLesson = createAsyncThunk(
 	}
 )
 
+export const togglePublishLesson = createAsyncThunk(
+	"lesson/togglePublishLesson",
+	async ({ id, is_published }, thunkAPI) => {
+		try {
+			const response = await instance.patch(`/lessons/${id}/publish`, { is_published });
+			thunkAPI.dispatch(getLessonById({id}))
+			return response.data;
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.response?.data || e.message);
+		}
+	}
+);
+
 const lessonSlice = createSlice({
 	name: "lesson",
 	initialState: {
@@ -111,6 +124,18 @@ const lessonSlice = createSlice({
 				state.loading = false
 			})
 			.addCase(reorderLesson.rejected, (state) => {
+				state.loading = false
+			})
+		
+		// togglePublishLesson
+		builder
+			.addCase(togglePublishLesson.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(togglePublishLesson.fulfilled, (state) => {
+				state.loading = false
+			})
+			.addCase(togglePublishLesson.rejected, (state) => {
 				state.loading = false
 			})
 	}

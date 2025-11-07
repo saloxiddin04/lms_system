@@ -1,7 +1,7 @@
 import React, {useEffect, useRef} from 'react';
 import mux from "mux-embed"
 
-const VideoPlayer = ({url}) => {
+const VideoPlayer = ({url, className}) => {
 	const videoRef = useRef(null)
 	
 	useEffect(() => {
@@ -23,7 +23,7 @@ const VideoPlayer = ({url}) => {
 			controls
 			ref={videoRef}
 			src={url}
-			className="w-full"
+			className={className ? `${className} w-full` : "w-full"}
 		/>
 	);
 };

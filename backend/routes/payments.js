@@ -24,8 +24,8 @@ router.post('/:id/enroll', authenticate, async (req, res) => {
 			mode: 'payment',
 			line_items: [{
 				price_data: {
-					currency: course.currency || 'usd',
-					unit_amount: course.price_cents,
+					currency: 'usd',
+					unit_amount: course.price_cents * 100,
 					product_data: {name: course.title}
 				},
 				quantity: 1
@@ -87,7 +87,7 @@ router.get('/confirm', async (req, res) => {
 		
 		res
 			.status(200)
-			.json({ ok: true, message: 'Payment confirmed and enrollment updated' })
+			.json({ ok: true, message: 'Payment confirmed and enrollment updated', courseId })
 	} catch (err) {
 		console.error(err)
 		res.status(500).json({ error: 'Server error confirming payment' })

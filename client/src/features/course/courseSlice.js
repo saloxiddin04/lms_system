@@ -73,7 +73,7 @@ export const togglePublishCourse = createAsyncThunk(
 	async ({ id, published }, thunkAPI) => {
 		try {
 			const response = await instance.patch(`/courses/${id}/publish`, { published });
-			thunkAPI.dispatch(getCourses())
+			thunkAPI.dispatch(getCourseById({id}))
 			return response.data;
 		} catch (e) {
 			return thunkAPI.rejectWithValue(e.response?.data || e.message);

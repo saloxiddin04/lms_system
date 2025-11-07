@@ -91,26 +91,6 @@ router.post(
 	}
 );
 
-// router.patch(
-// 	"/:id",
-// 	authenticate,
-// 	authorizeRole("admin", "teacher"),
-// 	upload.fields([{name: "lessonsVideo", maxCount: 50}]),
-// 	async (req, res) => {
-// 		try {
-// 			const {id} = req.params;
-// 			const updates = req.body;
-//
-// 			if (req.file) {
-// 				updates.lessonsVideo = `/uploads/lessons/${req.file.filename}`;
-// 			}
-// 		} catch (e) {
-// 			res.status(500).json({error: e.message});
-// 		}
-// 	}
-// )
-
-
 router.put(
 	"/:courseId/lesson/reorder",
 	authenticate,
@@ -212,6 +192,22 @@ router.patch(
 		}
 	}
 );
+
+router.patch('/:id/publish', authenticate, authorizeRole('admin'), async (req, res) => {
+	try {
+		const {id} = req.params
+		const { is_published } = req.body;
+		
+		const lesson = await db.query('SELECT * FROM lessons WHERE id=$1', [id]);
+		
+		if (!lesson) return res.status(404).json({error: 'Lesson not found'});
+		
+		const q = await db.query(`UPDATE lessons SET is_published=$1 WHERE id=$2 RETURNING *`, [is_published, id]);
+		res.status(200).json(q.rows[0]);
+	} catch (e) {
+		res.status(500).json({ error: e.message });
+	}
+});
 
 // delete
 router.delete('/lessons/:id', authenticate, async (req, res) => {

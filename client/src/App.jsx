@@ -10,6 +10,9 @@ import Hero from "@/pages/Hero.jsx";
 import Error403 from "@/pages/Error403.jsx";
 import Error404 from "@/pages/Error404.jsx";
 import {Toaster} from "react-hot-toast";
+import StudentLayout from "@/layouts/StudentLayout.jsx";
+import CourseDetail from "@/pages/Student/Course/CourseDetail.jsx";
+import PaymentSuccess from "@/pages/Student/Course/PaymentSuccess.jsx";
 
 function App() {
 
@@ -21,6 +24,8 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail/>} />
         
         <Route path="/" element={<Hero/>} />
+        <Route path="/course/:id" element={<CourseDetail/>} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
         
         <Route
           path="/admin/*"
@@ -44,6 +49,17 @@ function App() {
           }
         />
         
+        <Route
+          path="/student/*"
+          element={
+            <ProtectedRoute roles={["student"]}>
+              <DashboardLayout>
+                <StudentLayout />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+        
         <Route path="/403" element={<Error403 />} />
         <Route path="*" element={<Error404 />} />
       </Routes>
@@ -57,71 +73,3 @@ function App() {
 }
 
 export default App
-
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import DashboardLayout from "@/layouts/DashboardLayout";
-// import ProtectedRoute from "@/components/ProtectedRoute";
-// import LoginPage from "@/pages/LoginPage";
-// import StudentDashboard from "@/pages/student/Dashboard";
-// import TeacherDashboard from "@/pages/teacher/Dashboard";
-// import AdminDashboard from "@/pages/admin/Dashboard";
-// import NotFound from "@/pages/NotFound";
-// import Forbidden from "@/pages/Forbidden";
-//
-// function App() {
-//   const user = JSON.parse(localStorage.getItem("user")); // authdan keladi
-//   const logout = () => {
-//     localStorage.removeItem("user");
-//     window.location.href = "/login";
-//   };
-//
-//   return (
-//     <Router>
-//       <Routes>
-//         <Route path="/login" element={<LoginPage />} />
-//
-//         {/* Student */}
-//         <Route
-//           path="/student/*"
-//           element={
-//             <ProtectedRoute user={user} roles={["student"]}>
-//               <DashboardLayout user={user} onLogout={logout}>
-//                 <StudentDashboard />
-//               </DashboardLayout>
-//             </ProtectedRoute>
-//           }
-//         />
-//
-//         {/* Teacher */}
-//         <Route
-//           path="/teacher/*"
-//           element={
-//             <ProtectedRoute user={user} roles={["teacher"]}>
-//               <DashboardLayout user={user} onLogout={logout}>
-//                 <TeacherDashboard />
-//               </DashboardLayout>
-//             </ProtectedRoute>
-//           }
-//         />
-//
-//         {/* Admin */}
-//         <Route
-//           path="/admin/*"
-//           element={
-//             <ProtectedRoute user={user} roles={["admin"]}>
-//               <DashboardLayout user={user} onLogout={logout}>
-//                 <AdminDashboard />
-//               </DashboardLayout>
-//             </ProtectedRoute>
-//           }
-//         />
-//
-//         <Route path="/403" element={<Forbidden />} />
-//         <Route path="*" element={<NotFound />} />
-//       </Routes>
-//     </Router>
-//   );
-// }
-//
-// export default App;
-

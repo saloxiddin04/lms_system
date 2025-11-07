@@ -518,14 +518,16 @@ router.get('/', authenticate, async (req, res) => {
 			);
 		} else {
 			q = await db.query(
-				`SELECT c.*, json_build_object(
-            'id', u.id, 'name', u.name, 'email', u.email, 'role', u.role
-          ) AS teacher
-         FROM courses c
-         JOIN users u ON c.teacher = u.id
-         WHERE c.published = true
-         ORDER BY c.created_at DESC`
-			);
+				`SELECT c.*,
+				json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'role', u.role) AS teacher,
+				CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name, 'slug', cat.slug)
+			ELSE NULL END AS category
+			FROM courses c
+			JOIN users u ON c.teacher = u.id
+			LEFT JOIN categories cat ON c.category = cat.id
+			WHERE c.published = true
+			ORDER BY c.created_at DESC`
+			)
 		}
 		
 		res.status(200).json(q.rows);
@@ -597,7 +599,7 @@ router.get('/:id', authenticate, async (req, res) => {
 				visibleLessons = allLessons;
 			} else {
 				// To‘lov qilmagan bo‘lsa — faqat preview va published darslar
-				visibleLessons = allLessons.filter(l => l.is_preview && l.is_published);
+				visibleLessons = allLessons.filter(l => l.is_published);
 			}
 		} else {
 			// Guest foydalanuvchi (authenticate bor, lekin fallback uchun)
