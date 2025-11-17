@@ -1,8 +1,9 @@
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { getUserData, logout } from "@/auth/jwtService.js";
+import {Link, useNavigate} from "react-router-dom";
+import {Button} from "@/components/ui/button";
+import {getUserData, logout} from "@/auth/jwtService.js";
 
 export default function Navbar() {
+	const user = getUserData()
 	const navigate = useNavigate();
 	
 	return (
@@ -15,9 +16,9 @@ export default function Navbar() {
 					<div className="flex items-center gap-4">
 						{getUserData() ? (
 							<>
-            <span className="text-sm text-gray-600">
-              Hi, {getUserData()?.name}
-            </span>
+								<Button variant={"outline"} onClick={() => navigate(`/${user?.role}/profile`)} className="text-sm text-gray-600">
+									Hi, {getUserData()?.name}
+								</Button>
 								{getUserData()?.role === "admin" && (
 									<Button onClick={() => navigate("/admin/dashboard")}>
 										Admin mode

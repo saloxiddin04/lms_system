@@ -4,6 +4,22 @@ const db = require('../db')
 const {authenticate, authorizeRole} = require('../middleware/auth')
 const {upload} = require("../middleware/upload")
 
+router.get("/:courseId/lessons", authenticate, async (req, res) => {
+	try {
+		const {courseId} = req.params;
+		
+		const lessonQ = await db.query(`
+			SELECT * FROM lessons WHERE course_id = $1 ORDER BY order_index ASC;
+		`, [courseId])
+		
+		if (!lessonQ.rows[0]) return res.status(404).json({ error: 'Lesson not found' });
+		
+		res.status(200).json(lessonQ.rows)
+	} catch (e) {
+		res.status(500).json({error: e.message});
+	}
+})
+
 router.get("/:id", authenticate, async (req, res) => {
 	try {
 		const {id} = req.params;
@@ -150,7 +166,7 @@ router.patch(
 			
 			if (
 				req.user.role !== 'admin' &&
-				req.user.id !== course.teacher_id
+				req.user.id !== course.teacher
 			) {
 				return res.status(403).json({error: 'Forbidden'});
 			}
@@ -193,7 +209,7 @@ router.patch(
 	}
 );
 
-router.patch('/:id/publish', authenticate, authorizeRole('admin'), async (req, res) => {
+router.patch('/:id/publish', authenticate, authorizeRole('admin', 'teacher'), async (req, res) => {
 	try {
 		const {id} = req.params
 		const { is_published } = req.body;

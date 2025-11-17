@@ -11,9 +11,13 @@ import LessonAccessSettings from "@/pages/Admin/Lessons/_components/lesson-acces
 import LessonVideoForm from "@/pages/Admin/Lessons/_components/lesson-video-form.jsx";
 import Banner from "@/components/Banner.jsx";
 import LessonTopActions from "@/pages/Admin/Lessons/_components/lesson-top-actions.jsx";
+import LessonLinkForm from "@/pages/Admin/Lessons/_components/lesson-link-form.jsx";
+import {getUserData} from "@/auth/jwtService.js";
 
 const CreateLessonDetail = () => {
 	const dispatch = useDispatch()
+	
+	const user = getUserData()
 	
 	const {id, courseId} = useParams()
 	
@@ -35,8 +39,6 @@ const CreateLessonDetail = () => {
 	
 	const isComplete = requiredFields.every(Boolean)
 	
-	console.log(isComplete)
-	
 	if (loading) return <Loader/>
 	
 	return (
@@ -51,7 +53,7 @@ const CreateLessonDetail = () => {
 				<div className="flex items-center justify-between">
 					<div className="w-full">
 						<Link
-							to={`/admin/courses/create-course/${courseId}`}
+							to={`/${user?.role}/courses/create-course/${courseId}`}
 							className="flex items-center text-sm hover:opacity-75 transition mb-6"
 						>
 							<ArrowLeft className="w-4 h-4 mr-2"/>
@@ -106,6 +108,10 @@ const CreateLessonDetail = () => {
 							<h2 className="text-xl">Add a video</h2>
 						</div>
 						<LessonVideoForm
+							initialData={lesson}
+							lessonId={id}
+						/>
+						<LessonLinkForm
 							initialData={lesson}
 							lessonId={id}
 						/>

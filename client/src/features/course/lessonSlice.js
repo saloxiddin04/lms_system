@@ -1,6 +1,18 @@
 import {createAsyncThunk, createSlice} from "@reduxjs/toolkit";
 import instance from "@/utils/axios.js";
-import {getCourseById, getCourses} from "@/features/course/courseSlice.js";
+import {getCourseById} from "@/features/course/courseSlice.js";
+
+export const getLessonsByCourseId = createAsyncThunk(
+	"lesson/getLessonsByCourseId",
+	async ({courseId}, thunkAPI) => {
+		try {
+			const response = await instance.get(`/lessons/${courseId}/lessons`)
+			return response.data
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e?.response?.data || e.message)
+		}
+	}
+)
 
 export const getLessonById = createAsyncThunk(
 	"lesson/getLessonById",
@@ -78,6 +90,19 @@ const lessonSlice = createSlice({
 		lesson: null
 	},
 	extraReducers: (builder) => {
+		// getLessonByCourseId
+		builder
+			.addCase(getLessonsByCourseId.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(getLessonsByCourseId.fulfilled, (state, {payload}) => {
+				state.lessons = payload
+				state.loading = false
+			})
+			.addCase(getLessonsByCourseId.rejected, (state) => {
+				state.loading = false
+			})
+		
 		// getLessonById
 		builder
 			.addCase(getLessonById.pending, (state) => {

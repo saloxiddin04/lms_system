@@ -10,17 +10,10 @@ import UserDetail from "@/pages/Admin/Users/UserDetail.jsx";
 import Lessons from "@/pages/Admin/Lessons/Lessons.jsx";
 import CreateCourseDetail from "@/pages/Admin/Course/CreateCourseDetail.jsx";
 import CreateLessonDetail from "@/pages/Admin/Lessons/CreateLessonDetail.jsx";
+import Profile from "@/pages/Profile.jsx";
 
 function Dashboard() {
 	return <h2>Dashboard</h2>
-}
-
-function PaymentsOverview() {
-	return <h2>Payments Overview</h2>;
-}
-
-function Statistics() {
-	return <h2>Statistics</h2>;
 }
 
 const AdminLayout = () => {
@@ -46,8 +39,7 @@ const AdminLayout = () => {
 						<Route path="category" element={<Category/>}/>
 						<Route path="category/:id" element={<CreateCategory/>}/>
 						
-						<Route path="payments" element={<PaymentsOverview/>}/>
-						<Route path="stats" element={<Statistics/>}/>
+						<Route path="profile" element={<Profile/>}/>
 					</Routes>
 				</main>
 			</div>

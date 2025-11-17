@@ -37,7 +37,7 @@ const LessonVideoForm = ({initialData, lessonId}) => {
 	return (
 		<div className="mt-6 border bg-slate-100 rounded-md p-4">
 			<div className="font-medium flex items-center justify-between">
-				Lesson video
+				Lesson video *
 				<Button onClick={toggleEdit} variant="ghost">
 					{isEditing && (
 						<>Cancel</>

@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS lessons (
   order_index INTEGER DEFAULT 0,
   is_preview BOOLEAN DEFAULT false,
   is_published BOOLEAN DEFAULT false,
+  is_completed BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 

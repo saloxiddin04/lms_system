@@ -14,14 +14,20 @@ import PriceForm from "@/pages/Admin/Course/_components/price-form.jsx";
 import LessonsForm from "@/pages/Admin/Course/_components/lessons-form.jsx";
 import Banner from "@/components/Banner.jsx";
 import CourseTopActions from "@/pages/Admin/Course/_components/course-top-actions.jsx";
+import {getUserData} from "@/auth/jwtService.js";
+import TeacherForm from "@/pages/Admin/Course/_components/teacher-form.jsx";
+import {getTeachers} from "@/features/admin/adminSlice.js";
 
 const CreateCourseDetail = () => {
 	const dispatch = useDispatch()
+	
+	const user = getUserData()
 	
 	const {id} = useParams()
 	
 	const {course, loading} = useSelector((state) => state.course)
 	const {categories} = useSelector((state) => state.category)
+	const {teachers} = useSelector((state) => state.admin)
 	
 	const [showConfetti, setShowConfetti] = useState(false);
 	
@@ -30,13 +36,21 @@ const CreateCourseDetail = () => {
 		dispatch(getCourseById({id}))
 	}, [id, dispatch])
 	
+	useEffect(() => {
+		if (user?.role === "admin") {
+			dispatch(getTeachers())
+		}
+	}, [id, dispatch, user])
+	
 	const requiredFields = [
 		course?.title,
 		course?.description,
 		course?.preview_image,
 		course?.price_cents,
 		course?.category?.id,
-		course?.lessons?.some(lesson => lesson?.is_published)
+		course?.lessons?.some(lesson => lesson?.is_published),
+		
+		user?.role === "admin" ? course?.teacher_id : true
 	]
 	const totalFields = requiredFields.length
 	const completedFields = requiredFields.filter(Boolean).length
@@ -136,6 +150,16 @@ const CreateCourseDetail = () => {
 								initialData={course}
 								courseId={course?.id}
 							/>
+							{user?.role === "admin" && (
+								<TeacherForm
+									initialData={course}
+									courseId={course?.id}
+									options={teachers?.map((option) => ({
+										label: option?.name,
+										value: option?.id
+									}))}
+								/>
+							)}
 						</div>
 					</div>
 				</div>

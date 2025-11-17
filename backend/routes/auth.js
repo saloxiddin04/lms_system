@@ -4,7 +4,7 @@ const db = require('../db')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const SECRET = process.env.JWT_SECRET || 'dev-secret'
-const {authenticate} = require('../middleware/auth')
+const {authenticate, authorizeRole} = require('../middleware/auth')
 const nodemailer = require('nodemailer')
 
 // email transporter (gmail misol)
@@ -152,20 +152,38 @@ router.put('/change-password', authenticate, async (req, res) => {
 
 router.get('/me', authenticate, async (req, res) => {
 	try {
-		const q = await db.query('SELECT id,name,email,role,verify, created_at FROM users WHERE id=$1', [req.user.id])
-		res.status(200).json({user: q.rows[0]})
+		const q = await db.query('SELECT * FROM users WHERE id=$1', [req.user.id])
+		res.status(200).json(q.rows[0])
 	} catch (e) {
 		res.status(500).json({error: e.message})
 	}
 })
 
 // profile update
-router.put('/me', authenticate, async (req, res) => {
+router.patch('/user', authenticate, async (req, res) => {
 	try {
-		const {name} = req.body
-		await db.query('UPDATE users SET name=$1 WHERE id=$2', [name, req.user.id])
-		const q = await db.query('SELECT id,name,email,role FROM users WHERE id=$1', [req.user.id])
-		res.status(201).json({user: q.rows[0]})
+		const {name, password} = req.body
+		
+		const q = await db.query('SELECT * FROM users WHERE id=$1', [req.user.id])
+		
+		if (!q.rows[0]) return res.status(404).json({error: 'User not found'});
+		
+		let hashedPassword = null;
+		if (password && password.trim() !== '') {
+			if (password.length < 6) {
+				return res.status(400).json({ error: "Password must be at least 6 characters long" });
+			}
+			hashedPassword = await bcrypt.hash(password, 10);
+		}
+		
+		await db.query(
+			`UPDATE users
+       SET name = COALESCE($1, name),
+           password_hash = COALESCE($2, password_hash)
+       WHERE id = $3`,
+			[name, hashedPassword, req.user.id]
+		);
+		res.status(201).json(q.rows[0])
 	} catch (e) {
 		res.status(500).json({error: e.message})
 	}

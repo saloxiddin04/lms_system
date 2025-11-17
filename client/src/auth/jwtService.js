@@ -16,7 +16,14 @@ export function verify(...args) {
 
 export function fetchMe() {
 	return instance.get("/auth/me").then((res) => {
-		setUserData(res.data?.user)
+		setUserData(res?.data)
+		return res?.data
+	})
+}
+
+export function updateProfile(args) {
+	return instance.patch('/auth/user', args?.data).then((res) => {
+		setUserData(res?.data)
 	})
 }
 

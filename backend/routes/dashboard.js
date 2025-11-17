@@ -3,9 +3,64 @@ const router = express.Router()
 const db = require('../db')
 const {authenticate, authorizeRole} = require('../middleware/auth')
 
+router.get(
+	"/teacher",
+	authenticate,
+	authorizeRole("teacher"),
+	async (req, res) => {
+		try {
+			const teacherId = req.user.id;
+			
+			const totalCourses = await db.query(
+				"SELECT COUNT(*) FROM courses WHERE teacher = $1",
+				[teacherId]
+			);
+			
+			const totalStudents = await db.query(`
+        SELECT COUNT(*)
+        FROM enrollments e
+        JOIN courses c ON c.id = e.course_id
+        WHERE c.teacher = $1 AND e.paid = true
+      `, [teacherId]);
+			
+			const revenue = await db.query(`
+        SELECT COALESCE(SUM(amount_cents), 0) AS total
+        FROM payments
+        WHERE course_id IN (SELECT id FROM courses WHERE teacher = $1)
+          AND status = 'succeeded'
+      `, [teacherId]);
+			
+			const topCourses = await db.query(`
+        SELECT
+          c.id,
+          c.title,
+          COUNT(e.id) AS total_students
+        FROM enrollments e
+        JOIN courses c ON c.id = e.course_id
+        WHERE c.teacher = $1
+        GROUP BY c.id
+        ORDER BY total_students DESC
+        LIMIT 5
+      `, [teacherId]);
+			
+			res.status(200).json({
+				totalCourses: Number(totalCourses.rows[0].count),
+				totalStudents: Number(totalStudents.rows[0].count),
+				totalRevenue: Number(revenue.rows[0].total),
+				topCourses: topCourses.rows
+			});
+			
+		} catch (e) {
+			console.error(e);
+			res.status(500).json({ error: e.message });
+		}
+	}
+);
+
+
 // get earnings for teacher
-router.get('/teacher/earnings/:teacherId', async (req, res) => {
-	const { teacherId } = req.params;
+router.get('/teacher/earnings', authenticate, authorizeRole("teacher"), async (req, res) => {
+	const {id} = req.user;
 	
 	try {
 		const result = await db.query(`
@@ -20,12 +75,12 @@ router.get('/teacher/earnings/:teacherId', async (req, res) => {
       WHERE c.teacher_id = $1 AND p.status = 'succeeded'
       GROUP BY c.id, c.title
       ORDER BY total_earned DESC
-    `, [teacherId]);
+    `, [id]);
 		
 		res.status(200).json(result.rows);
 	} catch (err) {
 		console.error(err);
-		res.status(500).json({ error: 'Server error fetching teacher earnings' });
+		res.status(500).json({error: 'Server error fetching teacher earnings'});
 	}
 });
 
@@ -60,7 +115,7 @@ router.get('/admin/earnings', authenticate, async (req, res) => {
 		});
 	} catch (err) {
 		console.error(err);
-		res.status(500).json({ error: 'Server error fetching admin earnings' });
+		res.status(500).json({error: 'Server error fetching admin earnings'});
 	}
 });
 
@@ -85,7 +140,7 @@ router.get('/top-teachers', authenticate, authorizeRole('admin'), async (req, re
 		
 		res.status(200).json(q.rows);
 	} catch (e) {
-		res.status(500).json({ error: e.message });
+		res.status(500).json({error: e.message});
 	}
 });
 
@@ -109,10 +164,9 @@ router.get('/top-students', authenticate, authorizeRole('admin'), async (req, re
 		
 		res.status(200).json(q.rows);
 	} catch (e) {
-		res.status(500).json({ error: e.message });
+		res.status(500).json({error: e.message});
 	}
 });
-
 
 
 module.exports = router

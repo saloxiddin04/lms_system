@@ -45,6 +45,7 @@ const CategoryForm = ({initialData, courseId, options}) => {
 		await dispatch(updateCourse({id: courseId, formData: data})).then(({payload}) => {
 			if (payload) {
 				toast.success("Course updated")
+				toggleEdit()
 			}
 		})
 	}

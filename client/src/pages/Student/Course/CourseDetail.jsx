@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {useParams, useSearchParams} from "react-router-dom";
+import {useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import Navbar from "@/components/Navbar.jsx";
 import {CheckCircle, PlayCircle, Layers, Clock} from "lucide-react";
@@ -12,10 +12,14 @@ import {getCourseById} from "@/features/course/courseSlice.js";
 import toast from "react-hot-toast";
 import VideoPlayer from "@/components/VideoPlayer.jsx";
 import {enrollCourse} from "@/features/enroll/enrollSlice.js";
+import {getUserData} from "@/auth/jwtService.js";
 
 const CourseDetail = () => {
 	const dispatch = useDispatch()
+	const navigate = useNavigate()
 	const {id} = useParams()
+	
+	const user = getUserData()
 	
 	const {course, loading} = useSelector(state => state.course)
 	const { loading: enrollLoading } = useSelector(state => state.enroll);
@@ -38,6 +42,10 @@ const CourseDetail = () => {
 			}
 		});
 	};
+	
+	const handleNavigate = () => {
+		navigate(`/student/${id}/lessons/${course?.lessons[0]?.id}`)
+	}
 	
 	return (
 		<div>
@@ -79,14 +87,16 @@ const CourseDetail = () => {
                 </span>
 								)}
 							</div>
-							<Button
-								className="w-full"
-								onClick={course?.enrolled ? "" : handleEnroll}
-								disabled={enrollLoading}
-							>
-								{course?.enrolled ? "Kursni ko‘rish" : "Sotib olish"}
-								<PlayCircle className="ml-2 w-4 h-4"/>
-							</Button>
+							{user?.verify && (
+								<Button
+									className="w-full"
+									onClick={course?.enrolled ? handleNavigate : handleEnroll}
+									disabled={enrollLoading}
+								>
+									{course?.enrolled ? "Kursni ko‘rish" : "Sotib olish"}
+									<PlayCircle className="ml-2 w-4 h-4"/>
+								</Button>
+							)}
 						</CardContent>
 					</Card>
 				</div>
