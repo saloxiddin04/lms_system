@@ -1,28 +1,24 @@
-import React, {useEffect, useState} from 'react';
-import {Button} from "@/components/ui/button.jsx";
-import Navbar from "@/components/Navbar.jsx";
-import {useDispatch, useSelector} from "react-redux";
-import {getCourses} from "@/features/course/courseSlice.js";
+import React, { useEffect, useState } from 'react';
+import { Link } from "react-router-dom";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import instance from "@/utils/axios.js";
-import {Link, useNavigate} from "react-router-dom";
+import { BookOpen, Grid3X3, List } from "lucide-react";
+import { Badge } from "@/components/ui/badge.jsx";
+import { Button } from "@/components/ui/button.jsx";
+import { useDispatch, useSelector } from "react-redux";
+import { getCourses } from "@/features/course/courseSlice.js";
 import CourseSkeleton from "@/components/CourseSkeleton.jsx";
-import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/components/ui/card.jsx";
-import {BookOpen, Grid3X3, List} from "lucide-react";
-import {Badge} from "@/components/ui/badge.jsx";
 
-const Hero = () => {
-	const dispatch = useDispatch()
-	const navigate = useNavigate()
-	
-	const {courses, loading} = useSelector(state => state.course)
-	
+const Courses = () => {
+	const dispatch = useDispatch();
+	const { courses, loading } = useSelector(state => state.course);
 	const [viewMode, setViewMode] = useState('grid');
 	
 	useEffect(() => {
-		dispatch(getCourses())
-	}, [dispatch])
+		dispatch(getCourses());
+	}, [dispatch]);
 	
-	if (loading) return <CourseSkeleton/>
+	if (loading) return <CourseSkeleton />;
 	
 	// Grid View Card
 	const GridCourseCard = ({ course }) => (
@@ -163,76 +159,62 @@ const Hero = () => {
 	);
 	
 	return (
-		<div>
-			<div className="min-h-screen bg-gray-50">
-				{/* Hero Section */}
-				<section className="py-40 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
-					<div className="container mx-auto">
-						<h1 className="text-4xl font-bold mb-4">O‘rganing. Amaliyot qiling. Natijaga erishing.</h1>
-						<p className="text-lg mb-6">Eng yaxshi kurslar bir joyda. Hozir boshlang!</p>
-						<Button size="lg" variant="secondary" onClick={() => navigate("/courses")}>Kurslarni Ko‘rish</Button>
+		<section className="py-20">
+			<div className="container mx-auto px-4">
+				{/* Header with View Controls */}
+				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
+					<div>
+						<h1 className="text-3xl font-bold text-slate-900 mb-2">All Courses</h1>
+						<p className="text-slate-600">Discover and learn from our comprehensive course collection</p>
 					</div>
-				</section>
+					
+					{/* View Mode Toggle */}
+					<div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+						<Button
+							variant={viewMode === 'grid' ? 'default' : 'ghost'}
+							size="sm"
+							onClick={() => setViewMode('grid')}
+							className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+						>
+							<Grid3X3 className="h-4 w-4 text-slate-600" />
+						</Button>
+						<Button
+							variant={viewMode === 'list' ? 'default' : 'ghost'}
+							size="sm"
+							onClick={() => setViewMode('list')}
+							className={`px-3 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+						>
+							<List className="h-4 w-4 text-slate-600" />
+						</Button>
+					</div>
+				</div>
 				
-				{/* Courses List */}
-				<section className="py-16">
-					<div className="container mx-auto">
-						<h2 className="text-2xl font-bold mb-8 text-gray-800">Mavjud kurslar</h2>
-						<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
-							<div>
-								<h1 className="text-3xl font-bold text-slate-900 mb-2">All Courses</h1>
-								<p className="text-slate-600">Discover and learn from our comprehensive course collection</p>
-							</div>
-							
-							{/* View Mode Toggle */}
-							<div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
-								<Button
-									variant={viewMode === 'grid' ? 'default' : 'ghost'}
-									size="sm"
-									onClick={() => setViewMode('grid')}
-									className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-								>
-									<Grid3X3 className="h-4 w-4 text-slate-600" />
-								</Button>
-								<Button
-									variant={viewMode === 'list' ? 'default' : 'ghost'}
-									size="sm"
-									onClick={() => setViewMode('list')}
-									className={`px-3 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
-								>
-									<List className="h-4 w-4 text-slate-600" />
-								</Button>
-							</div>
-						</div>
-						
-						{/* Courses Grid/List */}
-						{viewMode === 'grid' ? (
-							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-								{courses?.map((course) => (
-									<GridCourseCard key={course?.id} course={course} />
-								))}
-							</div>
-						) : (
-							<div className="space-y-4">
-								{courses?.map((course) => (
-									<ListCourseCard key={course?.id} course={course} />
-								))}
-							</div>
-						)}
-						
-						{/* Empty State */}
-						{!loading && courses?.length === 0 && (
-							<div className="text-center py-12">
-								<BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-								<h3 className="text-lg font-medium text-slate-900 mb-2">No courses found</h3>
-								<p className="text-slate-600">Check back later for new courses</p>
-							</div>
-						)}
+				{/* Courses Grid/List */}
+				{viewMode === 'grid' ? (
+					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{courses?.map((course) => (
+							<GridCourseCard key={course?.id} course={course} />
+						))}
 					</div>
-				</section>
+				) : (
+					<div className="space-y-4">
+						{courses?.map((course) => (
+							<ListCourseCard key={course?.id} course={course} />
+						))}
+					</div>
+				)}
+				
+				{/* Empty State */}
+				{!loading && courses?.length === 0 && (
+					<div className="text-center py-12">
+						<BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+						<h3 className="text-lg font-medium text-slate-900 mb-2">No courses found</h3>
+						<p className="text-slate-600">Check back later for new courses</p>
+					</div>
+				)}
 			</div>
-		</div>
+		</section>
 	);
 };
 
-export default Hero;
+export default Courses;

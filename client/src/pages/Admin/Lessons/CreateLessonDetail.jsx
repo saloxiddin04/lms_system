@@ -1,9 +1,9 @@
 import React, {useEffect} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Link, useParams} from "react-router-dom";
+import {Link, useNavigate, useParams} from "react-router-dom";
 import {ArrowLeft, LayoutDashboard, Eye, Video} from "lucide-react";
 import {IconBadge} from "@/components/IconBadge.jsx";
-import {getLessonById} from "@/features/course/lessonSlice.js";
+import {deleteLesson, getLessonById} from "@/features/course/lessonSlice.js";
 import LessonTitleForm from "@/pages/Admin/Lessons/_components/lesson-title-form.jsx";
 import Loader from "@/components/Loader.jsx";
 import LessonContentForm from "@/pages/Admin/Lessons/_components/lesson-content-form.jsx";
@@ -13,10 +13,11 @@ import Banner from "@/components/Banner.jsx";
 import LessonTopActions from "@/pages/Admin/Lessons/_components/lesson-top-actions.jsx";
 import LessonLinkForm from "@/pages/Admin/Lessons/_components/lesson-link-form.jsx";
 import {getUserData} from "@/auth/jwtService.js";
+import {UniversalDeleteModal} from "@/components/UniversalDeleteModal.jsx";
 
 const CreateLessonDetail = () => {
 	const dispatch = useDispatch()
-	
+	const navigate = useNavigate()
 	const user = getUserData()
 	
 	const {id, courseId} = useParams()
@@ -38,6 +39,17 @@ const CreateLessonDetail = () => {
 	const completionText = `(${completedFields}/${totalFields})`
 	
 	const isComplete = requiredFields.every(Boolean)
+	
+	const handleDeleteLesson = (data) => {
+		dispatch(deleteLesson({lessonId: data?.id})).then(() => {
+			navigate(`/admin/courses/create-course/${courseId}`)
+		})
+	}
+	
+	const {openModal, ModalComponent} = UniversalDeleteModal({
+		onDelete: handleDeleteLesson,
+		entityType: "lesson"
+	});
 	
 	if (loading) return <Loader/>
 	
@@ -68,6 +80,7 @@ const CreateLessonDetail = () => {
 								disabled={!isComplete}
 								lessonId={id}
 								isPublished={lesson?.is_published}
+								openModal={() => openModal(lesson)}
 							/>
 						</div>
 					</div>
@@ -118,6 +131,7 @@ const CreateLessonDetail = () => {
 					</div>
 				</div>
 			</div>
+			{ModalComponent}
 		</>
 	);
 };

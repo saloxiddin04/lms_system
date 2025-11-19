@@ -55,8 +55,8 @@ const Login = () => {
 					<CardFooter>
 						<Button type="submit" className="w-full my-4">Login</Button>
 					</CardFooter>
-					<h1 className="text-center text-gray-400">Don't have an account? <Link className="text-blue-500"
-					                                                                       to={"/register"}>Register</Link></h1>
+					<h1 className="text-center text-gray-400">Don't have an account? <Link className="text-blue-500" to={"/register"}>Register</Link></h1>
+					<h1 className="text-center text-gray-400">You have an account and not verified? <Link className="text-blue-500" to={"/verify"}>Verify</Link></h1>
 				</form>
 			</Card>
 		</div>

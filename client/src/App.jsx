@@ -13,17 +13,23 @@ import {Toaster} from "react-hot-toast";
 import StudentLayout from "@/layouts/StudentLayout.jsx";
 import CourseDetail from "@/pages/Student/Course/CourseDetail.jsx";
 import PaymentSuccess from "@/pages/Student/Course/PaymentSuccess.jsx";
+import Verify from "@/pages/Auth/Verify.jsx";
+import Courses from "@/pages/Courses.jsx";
+import Navbar from "@/components/Navbar.jsx";
 
 function App() {
 
   return (
     <>
+      <Navbar />
       <Routes>
         <Route path="/register" element={<Register/>} />
         <Route path="/login" element={<Login/>} />
         <Route path="/verify-email" element={<VerifyEmail/>} />
+        <Route path="/verify" element={<Verify/>} />
         
         <Route path="/" element={<Hero/>} />
+        <Route path="/courses" element={<Courses/>} />
         <Route path="/course/:id" element={<CourseDetail/>} />
         <Route path="/payment-success" element={<PaymentSuccess />} />
         

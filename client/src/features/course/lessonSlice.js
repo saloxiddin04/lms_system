@@ -82,6 +82,30 @@ export const togglePublishLesson = createAsyncThunk(
 	}
 );
 
+export const progressLesson = createAsyncThunk(
+	"lesson/progressLesson",
+	async ({courseId, lessonId}, thunkAPI) => {
+		try {
+			const response = await instance.put(`/courses/${courseId}/progress`, {lessonId})
+			return response.data
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.response?.data || e.message);
+		}
+	}
+)
+
+export const deleteLesson = createAsyncThunk(
+	"lesson/deleteLesson",
+	async ({lessonId}, thunkAPI) => {
+		try {
+			const response = await instance.delete(`/lessons/${lessonId}`)
+			return response.data
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.response?.data || e.message);
+		}
+	}
+)
+
 const lessonSlice = createSlice({
 	name: "lesson",
 	initialState: {
@@ -161,6 +185,30 @@ const lessonSlice = createSlice({
 				state.loading = false
 			})
 			.addCase(togglePublishLesson.rejected, (state) => {
+				state.loading = false
+			})
+		
+		// progressLesson
+		builder
+			.addCase(progressLesson.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(progressLesson.fulfilled, (state) => {
+				state.loading = false
+			})
+			.addCase(progressLesson.rejected, (state) => {
+				state.loading = false
+			})
+		
+		// deleteLesson
+		builder
+			.addCase(deleteLesson.pending, (state) => {
+				state.loading = true
+			})
+			.addCase(deleteLesson.fulfilled, (state) => {
+				state.loading = false
+			})
+			.addCase(deleteLesson.rejected, (state) => {
 				state.loading = false
 			})
 	}

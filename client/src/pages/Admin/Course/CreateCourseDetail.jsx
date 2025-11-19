@@ -40,7 +40,7 @@ const CreateCourseDetail = () => {
 		if (user?.role === "admin") {
 			dispatch(getTeachers())
 		}
-	}, [id, dispatch, user])
+	}, [id, dispatch])
 	
 	const requiredFields = [
 		course?.title,
@@ -50,7 +50,7 @@ const CreateCourseDetail = () => {
 		course?.category?.id,
 		course?.lessons?.some(lesson => lesson?.is_published),
 		
-		user?.role === "admin" ? course?.teacher_id : true
+		user?.role === "admin" ? course?.teacher?.id : true
 	]
 	const totalFields = requiredFields.length
 	const completedFields = requiredFields.filter(Boolean).length

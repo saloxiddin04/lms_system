@@ -64,7 +64,7 @@ const Course = () => {
 					<TableBody>
 						{courses?.length === 0 ? (
 							<TableRow>
-								<TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+								<TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
 									No courses found.
 								</TableCell>
 							</TableRow>

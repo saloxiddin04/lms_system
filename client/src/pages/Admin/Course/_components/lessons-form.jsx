@@ -1,4 +1,3 @@
-
 import {useState} from "react";
 import * as z from "zod"
 import {zodResolver} from "@hookform/resolvers/zod";
@@ -16,7 +15,7 @@ import {Button} from "@/components/ui/button";
 import {Loader2, PlusCircle} from "lucide-react";
 import toast from "react-hot-toast";
 import {cn} from "@/lib/utils";
-import {useDispatch} from "react-redux";
+import {useDispatch, useSelector} from "react-redux";
 import {createLesson, reorderLesson} from "@/features/course/lessonSlice.js";
 import {Input} from "@/components/ui/input.jsx";
 import LessonsList from "@/pages/Admin/Course/_components/lessons-list.jsx";
@@ -30,6 +29,8 @@ const formSchema = z.object({
 const LessonsForm = ({initialData, courseId}) => {
 	const dispatch = useDispatch()
 	const navigate = useNavigate()
+	
+	const {course} = useSelector(state => state.course)
 	
 	const [isUpdating, setIsUpdating] = useState(false)
 	const [isCreating, setIsCreating] = useState(false)
@@ -46,7 +47,7 @@ const LessonsForm = ({initialData, courseId}) => {
 	const {isSubmitting, isValid} = form.formState
 	
 	const onSubmit = async (data) => {
-		await dispatch(createLesson({courseId, formData: data})).then(({payload}) => {
+		await dispatch(createLesson({courseId, formData: {...data, order_index: course?.lessons?.length}})).then(({payload}) => {
 			if (payload) {
 				toast.success("Lesson created")
 				toggleCreating()

@@ -2,12 +2,10 @@ import React from 'react';
 import {Route, Routes} from "react-router-dom";
 import Course from "@/pages/Admin/Course/Course.jsx";
 import CreateCourse from "@/pages/Admin/Course/CreateCourse.jsx";
-import CreateLessons from "@/pages/Admin/Lessons/CreateLessons.jsx";
 import Category from "@/pages/Admin/Category/Category.jsx";
 import CreateCategory from "@/pages/Admin/Category/CreateCategory.jsx";
 import Users from "@/pages/Admin/Users/Users.jsx";
 import UserDetail from "@/pages/Admin/Users/UserDetail.jsx";
-import Lessons from "@/pages/Admin/Lessons/Lessons.jsx";
 import CreateCourseDetail from "@/pages/Admin/Course/CreateCourseDetail.jsx";
 import CreateLessonDetail from "@/pages/Admin/Lessons/CreateLessonDetail.jsx";
 import Profile from "@/pages/Profile.jsx";
@@ -32,9 +30,6 @@ const AdminLayout = () => {
 						<Route path="courses/create-course/:id" element={<CreateCourseDetail/>}/>
 						
 						<Route path="courses/create-course/:courseId/lessons/:id" element={<CreateLessonDetail/>}/>
-						
-						<Route path="lessons" element={<Lessons/>}/>
-						<Route path="lessons/create-lesson/:courseId" element={<CreateLessons/>}/>
 						
 						<Route path="category" element={<Category/>}/>
 						<Route path="category/:id" element={<CreateCategory/>}/>

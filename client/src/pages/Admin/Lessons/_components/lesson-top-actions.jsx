@@ -3,8 +3,9 @@ import {Button} from "@/components/ui/button.jsx";
 import {useDispatch} from "react-redux";
 import {togglePublishLesson} from "@/features/course/lessonSlice.js";
 import toast from "react-hot-toast";
+import {TrashIcon} from "lucide-react";
 
-const LessonTopActions = ({disabled, lessonId, isPublished}) => {
+const LessonTopActions = ({disabled, lessonId, isPublished, openModal}) => {
 	const dispatch = useDispatch()
 	
 	const togglePublish = () => {
@@ -24,6 +25,13 @@ const LessonTopActions = ({disabled, lessonId, isPublished}) => {
 				onClick={togglePublish}
 			>
 				{isPublished ? "Unpublish" : "Publish"}
+			</Button>
+			<Button
+				variant={"destructive"}
+				size={"sm"}
+				onClick={openModal}
+			>
+				<TrashIcon />
 			</Button>
 		</div>
 	);

@@ -22,9 +22,11 @@ const VideoPlayer = ({url, className}) => {
 		<video
 			controls
 			ref={videoRef}
-			src={url}
 			className={className ? `${className} w-full` : "w-full"}
-		/>
+		>
+			<source src={url} type="video/mp4" className="w-full h-full"/>
+			Your browser does not support the video tag.
+		</video>
 	);
 };
 
