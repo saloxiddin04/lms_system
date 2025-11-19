@@ -67,40 +67,6 @@ router.post(
 				message: "Lesson created successfully!",
 				lesson: lessonQ.rows[0]
 			})
-			
-			// const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
-			
-			// if (!files?.lessonsVideo) return res.status(400).json({ error: 'Lessons video is required' });
-			
-			// let videoIndex = 0;
-			// for (let i = 0; i < lessonsArr.length; i++) {
-			// 	const les = lessonsArr[i];
-			// 	let videoPath = null;
-			//
-			// 	if (files.lessonsVideo && files.lessonsVideo[videoIndex]) {
-			// 		videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
-			// 		videoIndex++;
-			// 	}
-			//
-			// 	await db.query(
-			// 		`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
-			//      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-			// 		[
-			// 			courseId,
-			// 			les.title,
-			// 			les.content,
-			// 			les.link,
-			// 			les.order_index || i + 1,
-			// 			les.is_preview || false,
-			// 			les.is_published || false,
-			// 			videoPath
-			// 		]
-			// 	);
-			// }
-			//
-			// res.status(201).json({
-			// 	message: "Lessons created successfully"
-			// });
 		} catch (e) {
 			res.status(500).json({error: e.message});
 		}
@@ -226,7 +192,7 @@ router.patch('/:id/publish', authenticate, authorizeRole('admin', 'teacher'), as
 });
 
 // delete
-router.delete('/lessons/:id', authenticate, async (req, res) => {
+router.delete('/:id', authenticate, async (req, res) => {
 	try {
 		await db.query('DELETE FROM lessons WHERE id=$1', [req.params.id])
 		res.status(204).json({ok: true})

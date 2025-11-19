@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS courses (
   category INTEGER REFERENCES categories(id) ON DELETE SET NULL,
   description TEXT,
   teacher INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  price_cents INTEGER DEFAULT 0,
+  price_cents DECIMAL(10,2),
   currency VARCHAR(10) DEFAULT 'usd',
   published BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),

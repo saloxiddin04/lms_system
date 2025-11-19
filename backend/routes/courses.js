@@ -13,14 +13,17 @@ const {upload, deleteFiles} = require('../middleware/upload.js');
 router.get('/', optionalAuth, async (req, res) => {
 	try {
 		let q;
-		
+
 		if (req?.user?.role === 'teacher') {
 			q = await db.query(
 				`SELECT c.*, json_build_object(
             'id', u.id, 'name', u.name, 'email', u.email, 'role', u.role
-          ) AS teacher
+          ) AS teacher,
+          CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name, 'slug', cat.slug)
+                 ELSE NULL END AS category
          FROM courses c
          JOIN users u ON c.teacher = u.id
+         LEFT JOIN categories cat ON c.category = cat.id
          WHERE c.teacher = $1
          ORDER BY c.created_at DESC`,
 				[req.user.id]
@@ -49,7 +52,7 @@ router.get('/', optionalAuth, async (req, res) => {
 			ORDER BY c.created_at DESC`
 			)
 		}
-		
+
 		res.status(200).json(q.rows);
 	} catch (e) {
 		console.error(e);
@@ -57,10 +60,6 @@ router.get('/', optionalAuth, async (req, res) => {
 	}
 });
 
-/**
- * GET /courses/:id
- * Kurs ma'lumotlari + lessons[]
- */
 router.get('/:id', optionalAuth, async (req, res) => {
 	try {
 		const {id} = req.params;
@@ -119,11 +118,11 @@ router.get('/:id', optionalAuth, async (req, res) => {
 				visibleLessons = allLessons;
 			} else {
 				// To‘lov qilmagan bo‘lsa — faqat preview va published darslar
-				visibleLessons = allLessons.filter(l => l.is_preview && l.is_published);
+				visibleLessons = allLessons.filter(l => l.is_published);
 			}
 		} else {
 			// Guest foydalanuvchi (authenticate bor, lekin fallback uchun)
-			visibleLessons = allLessons.filter(l => l.is_preview && l.is_published);
+			visibleLessons = allLessons.filter(l => l.is_published);
 		}
 		
 		res.status(200).json({
@@ -148,85 +147,6 @@ router.get('/:id', optionalAuth, async (req, res) => {
 		res.status(500).json({error: e.message});
 	}
 });
-
-/**
- * POST /courses/full
- * Course + lessons yaratish
- */
-router.post(
-	'/full',
-	authenticate,
-	authorizeRole('teacher', 'admin'),
-	upload.fields([
-		{name: 'preview', maxCount: 1},
-		{name: 'lessonsVideo', maxCount: 50}
-	]),
-	async (req, res) => {
-		try {
-			const {title, description, price_cents, currency, category, teacher, lessons} = req.body;
-			const files = req.files;
-			const lessonsArr = typeof lessons === 'string' ? JSON.parse(lessons) : lessons;
-			
-			let finalTeacherId = req.user.role === 'admin' && teacher ? teacher : req.user.id;
-			
-			if (!category) return res.status(400).json({error: 'Category is required'});
-			if (!files?.preview) return res.status(400).json({error: 'Preview image is required'});
-			if (!files?.lessonsVideo) return res.status(400).json({error: 'Lessons video is required'});
-			
-			// 1️⃣ Course yaratish
-			const courseQ = await db.query(
-				`INSERT INTO courses (title, description, teacher, category, price_cents, currency, published, preview_image)
-         VALUES ($1,$2,$3,$4,$5,$6,false,$7) RETURNING *`,
-				[
-					title,
-					description,
-					finalTeacherId,
-					category,
-					price_cents || 0,
-					currency || 'usd',
-					files.preview ? `/uploads/courses/${files.preview[0].filename}` : null
-				]
-			);
-			const course = courseQ.rows[0];
-			
-			// 2️⃣ Lessons yaratish
-			let videoIndex = 0;
-			for (let i = 0; i < lessonsArr.length; i++) {
-				const les = lessonsArr[i];
-				let videoPath = null;
-				
-				if (files.lessonsVideo && files.lessonsVideo[videoIndex]) {
-					videoPath = `/uploads/lessons/${files.lessonsVideo[videoIndex].filename}`;
-					videoIndex++;
-				}
-				
-				await db.query(
-					`INSERT INTO lessons (course_id, title, content, link, order_index, is_preview, is_published, video_url)
-           VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
-					[
-						course.id,
-						les.title,
-						les.content,
-						les.link,
-						les.order_index || i + 1,
-						les.is_preview || false,
-						les.is_published || false,
-						videoPath
-					]
-				);
-			}
-			
-			res.status(201).json({
-				message: 'Course with lessons created successfully',
-				courseId: course.id,
-				lessons: lessonsArr.length,
-			});
-		} catch (err) {
-			console.error('Course creation error:', err);
-			res.status(500).json({error: err.message});
-		}
-	}
-);
 
 router.post("/course", authenticate, authorizeRole('teacher', 'admin'), upload.fields([{
 	name: 'preview',
@@ -442,37 +362,91 @@ router.put(
  */
 router.put('/:id/progress', authenticate, async (req, res) => {
 	try {
-		const {id} = req.params;
+		const { id: courseId } = req.params;
 		const userId = req.user.id;
-		const {lessonId, completed} = req.body;
+		const { lessonId } = req.body;
 		
+		if (!lessonId) {
+			return res.status(400).json({ error: "lessonId is required" });
+		}
+		
+		// 1️⃣ ENROLLMENT CHECK
 		const enrollmentQ = await db.query(
-			'SELECT * FROM enrollments WHERE user_id=$1 AND course_id=$2',
-			[userId, id]
+			`SELECT * FROM enrollments WHERE user_id=$1 AND course_id=$2`,
+			[userId, courseId]
 		);
 		
 		const enrollment = enrollmentQ.rows[0];
-		if (!enrollment) return res.status(404).json({error: 'Enrollment not found'});
+		if (!enrollment) {
+			return res.status(404).json({ error: "Enrollment not found" });
+		}
 		
-		const currentProgress = enrollment.progress || {};
-		currentProgress[lessonId] = completed;
+		// 2️⃣ UPDATE LESSON is_completed = true
+		await db.query(
+			`UPDATE lessons SET is_completed=true WHERE id=$1`,
+			[lessonId]
+		);
 		
-		await db.query('UPDATE enrollments SET progress=$1 WHERE id=$2', [currentProgress, enrollment.id]);
+		// 3️⃣ UPDATE ENROLLMENT progress JSON
+		const progress = enrollment.progress || {};
+		progress[lessonId] = true;
 		
-		const lessonsQ = await db.query('SELECT id FROM lessons WHERE course_id=$1', [id]);
-		const totalLessons = lessonsQ.rows.length;
-		const completedLessons = Object.values(currentProgress).filter(v => v).length;
-		const percent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
+		await db.query(
+			`UPDATE enrollments SET progress=$1 WHERE id=$2`,
+			[progress, enrollment.id]
+		);
 		
+		// 4️⃣ GET ALL ORDERED LESSONS OF COURSE
+		const lessonsQ = await db.query(
+			`SELECT id, order_index, title, is_completed FROM lessons
+             WHERE course_id=$1
+             ORDER BY order_index ASC`,
+			[courseId]
+		);
+		
+		const lessons = lessonsQ.rows;
+		const totalLessons = lessons.length;
+		
+		// 5️⃣ FIND NEXT UNCOMPLETED LESSON
+		let nextLesson = null;
+		
+		// Get current lesson to find its order_index
+		const currentLesson = lessons.find(l => l.id == lessonId);
+		
+		if (currentLesson) {
+			// Find the next lesson by order_index that is not completed
+			const nextLessons = lessons.filter(l =>
+				l.order_index > currentLesson.order_index &&
+				!l.is_completed
+			);
+			
+			if (nextLessons.length > 0) {
+				// Get the immediate next lesson by order_index
+				nextLesson = nextLessons.sort((a, b) => a.order_index - b.order_index)[0];
+			}
+		}
+		
+		// 6️⃣ PROGRESS PERCENT
+		const completedCount = Object.keys(progress).length;
+		
+		const percent =
+			totalLessons > 0
+				? Math.round((completedCount / totalLessons) * 100)
+				: 0;
+		
+		// 7️⃣ RESPONSE
 		res.status(200).json({
-			message: 'Progress updated',
-			progress: currentProgress,
-			completedLessons,
+			message: "Lesson completed",
+			progress,
+			completedLessons: completedCount,
 			totalLessons,
-			percent
+			percent,
+			nextLesson
 		});
+		
 	} catch (e) {
-		res.status(500).json({error: e.message});
+		console.error(e);
+		res.status(500).json({ error: e.message });
 	}
 });
 
@@ -496,11 +470,11 @@ router.patch(
 				return res.status(400).json({error: "Hech qanday maydon yuborilmadi"});
 			}
 			
-			if (req.user.role === "admin") {
-				if (!updates.teacher) {
-					return res.status(400).json({error: "Teacher ID majburiy (admin uchun)"});
-				}
-			}
+			// if (req.user.role === "admin") {
+			// 	if (!updates.teacher) {
+			// 		return res.status(400).json({error: "Teacher ID majburiy (admin uchun)"});
+			// 	}
+			// }
 			
 			// Teacher bo‘lsa → teacher = token.user.id qilib qo'yamiz (body’dan olish taqiqlanadi)
 			if (req.user.role === "teacher") {

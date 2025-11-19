@@ -57,7 +57,6 @@ router.get(
 	}
 );
 
-
 // get earnings for teacher
 router.get('/teacher/earnings', authenticate, authorizeRole("teacher"), async (req, res) => {
 	const {id} = req.user;
@@ -168,5 +167,63 @@ router.get('/top-students', authenticate, authorizeRole('admin'), async (req, re
 	}
 });
 
+
+// GET /student/my-courses
+router.get('/my-courses', authenticate, async (req, res) => {
+	try {
+		const userId = req.user.id;
+		
+		// Enrollment orqali kurslarni olish
+		const enrollmentsQ = await db.query(
+			`SELECT
+				e.*,
+				c.*,
+				u.name as teacher_name,
+				cat.name as category_name,
+				(SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_published = true) as total_lessons,
+				(SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_completed = true) as completed_lessons
+			FROM enrollments e
+			JOIN courses c ON e.course_id = c.id
+			JOIN users u ON c.teacher = u.id
+			LEFT JOIN categories cat ON c.category = cat.id
+			WHERE e.user_id = $1 AND c.published = true
+			ORDER BY e.enrolled_at DESC`,
+			[userId]
+		);
+		
+		const courses = enrollmentsQ.rows.map(enrollment => {
+			const progress = enrollment.progress || {};
+			const completedCount = Object.keys(progress).length;
+			const totalLessons = enrollment.total_lessons || 0;
+			const percent = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
+			
+			return {
+				id: enrollment.course_id,
+				title: enrollment.title,
+				description: enrollment.description,
+				preview_image: enrollment.preview_image,
+				teacher_name: enrollment.teacher_name,
+				category_name: enrollment.category_name,
+				price_cents: enrollment.price_cents,
+				currency: enrollment.currency,
+				enrolled_at: enrollment.enrolled_at,
+				progress: progress,
+				progress_percent: percent,
+				completed_lessons: completedCount,
+				total_lessons: totalLessons,
+				paid: enrollment.paid
+			};
+		});
+		
+		res.status(200).json({
+			success: true,
+			courses: courses
+		});
+		
+	} catch (e) {
+		console.error(e);
+		res.status(500).json({ error: e.message });
+	}
+});
 
 module.exports = router
