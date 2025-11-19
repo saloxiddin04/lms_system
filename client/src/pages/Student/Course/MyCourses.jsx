@@ -196,7 +196,7 @@ const CourseCard = ({ course, getProgressColor }) => {
 					</Button>
 				) : (
 					<Button asChild className="flex-1">
-						<Link to={`/student/${course?.id}/lessons`}>
+						<Link to={`/student/${course?.id}/lessons/${lessonIds[0]}`}>
 							<PlayCircle className="h-4 w-4 mr-2" />
 							Boshlash
 						</Link>
