@@ -9,10 +9,7 @@ import UserDetail from "@/pages/Admin/Users/UserDetail.jsx";
 import CreateCourseDetail from "@/pages/Admin/Course/CreateCourseDetail.jsx";
 import CreateLessonDetail from "@/pages/Admin/Lessons/CreateLessonDetail.jsx";
 import Profile from "@/pages/Profile.jsx";
-
-function Dashboard() {
-	return <h2>Dashboard</h2>
-}
+import Dashboard from "@/pages/Admin/Dashboard/Dashboard.jsx";
 
 const AdminLayout = () => {
 	return (

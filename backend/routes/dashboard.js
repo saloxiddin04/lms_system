@@ -6,7 +6,7 @@ const {authenticate, authorizeRole} = require('../middleware/auth')
 router.get(
 	"/teacher",
 	authenticate,
-	authorizeRole("teacher"),
+	authorizeRole("teacher", "admin"),
 	async (req, res) => {
 		try {
 			const teacherId = req.user.id;
@@ -94,7 +94,7 @@ router.get('/admin/earnings', authenticate, async (req, res) => {
         COALESCE(SUM(p.amount_cents), 0) AS total_earned,
         COUNT(p.id) AS total_sales
       FROM courses c
-      JOIN users u ON c.teacher_id = u.id
+      JOIN users u ON c.teacher = u.id
       JOIN enrollments e ON c.id = e.course_id
       JOIN payments p ON e.course_id = p.course_id AND e.user_id = p.user_id
       WHERE p.status = 'succeeded'
@@ -129,7 +129,7 @@ router.get('/top-teachers', authenticate, authorizeRole('admin'), async (req, re
         COUNT(p.id) AS total_sales,
         COALESCE(SUM(p.amount_cents), 0) AS total_earned
       FROM users u
-      JOIN courses c ON c.teacher_id = u.id
+      JOIN courses c ON c.teacher = u.id
       JOIN payments p ON p.course_id = c.id AND p.status = 'succeeded'
       WHERE u.role = 'teacher'
       GROUP BY u.id

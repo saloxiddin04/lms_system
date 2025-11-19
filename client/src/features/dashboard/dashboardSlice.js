@@ -15,7 +15,7 @@ export const getTeacherDashboard = createAsyncThunk(
 
 export const getMyCoursesForStudent = createAsyncThunk(
 	"dashboard/getMyCoursesForStudent",
-	async (_, {thunkAPI}) => {
+	async (_, thunkAPI) => {
 		try {
 			const response = await instance.get("/dashboard/my-courses")
 			return response.data
@@ -25,11 +25,33 @@ export const getMyCoursesForStudent = createAsyncThunk(
 	}
 )
 
+export const getAdminDashboardData = createAsyncThunk(
+	'dashboard/getAdminDashboardData',
+	async (_, thunkAPI) => {
+		try {
+			const [earningsRes, teachersRes, studentsRes] = await Promise.all([
+				instance.get('/dashboard/admin/earnings'),
+				instance.get('/dashboard/top-teachers'),
+				instance.get('/dashboard/top-students')
+			]);
+			
+			return {
+				earnings: earningsRes.data,
+				teachers: teachersRes.data,
+				students: studentsRes.data
+			};
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e?.response?.data || e.message)
+		}
+	}
+);
+
 const dashboardSlice = createSlice({
 	name: "dashboard",
 	initialState: {
 		loading: false,
 		teacherDashboard: null,
+		adminDashboard: null,
 		myCourses: null
 	},
 	extraReducers: builder => {
@@ -57,6 +79,19 @@ const dashboardSlice = createSlice({
 			.addCase(getMyCoursesForStudent.rejected, (state) => {
 				state.loading = false
 			})
+		
+		// Admin Dashboard
+		builder
+			.addCase(getAdminDashboardData.pending, (state) => {
+				state.loading = true;
+			})
+			.addCase(getAdminDashboardData.fulfilled, (state, {payload}) => {
+				state.adminDashboard = payload;
+				state.loading = false;
+			})
+			.addCase(getAdminDashboardData.rejected, (state) => {
+				state.loading = false;
+			});
 	}
 })
 
