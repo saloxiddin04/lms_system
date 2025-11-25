@@ -180,7 +180,7 @@ export default function Sidebar({role}) {
 	
 	return (
 		<aside className="fixed top-[56px] left-0 h-[calc(100vh-56px)] w-64 bg-white border-r p-2 z-40 overflow-y-auto flex flex-col">
-			<nav className="flex flex-col gap-2 my-2 flex-1">
+			<nav className="flex flex-col gap-2 my-4 flex-1">
 				{isLessonPage && lessons?.length > 0 ? (
 					<>
 						<div className={"p-2 flex flex-col border-b"}>

@@ -1,6 +1,6 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {deleteCategory, getCategories} from "@/features/category/categorySlice.js";
+import {deleteCategory, getCategories, searchCategory} from "@/features/category/categorySlice.js";
 import {useNavigate} from "react-router-dom";
 import {Button} from "@/components/ui/button.jsx";
 import Loader from "@/components/Loader.jsx";
@@ -13,21 +13,72 @@ import {
 	DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.jsx";
 import {Badge} from "@/components/ui/badge.jsx";
-import {Edit, MoreHorizontal, Trash2} from "lucide-react";
+import {Edit, MoreHorizontal, Trash2, Search, X} from "lucide-react";
 import moment from "moment";
 import {UniversalDeleteModal} from "@/components/UniversalDeleteModal.jsx";
+import {Input} from "@/components/ui/input.jsx";
 
 const TopSideButtons = () => {
 	const navigate = useNavigate()
+	const dispatch = useDispatch()
+	
+	const [searchTerm, setSearchTerm] = useState('');
+	
+	const handleSearch = () => {
+		if (searchTerm.trim()) {
+			dispatch(searchCategory(searchTerm));
+		} else {
+			dispatch(getCategories());
+		}
+	};
+	
+	const handleKeyPress = (e) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
+	
+	const clearSearch = () => {
+		setSearchTerm('');
+		dispatch(getCategories());
+	};
 	
 	return (
-		<Button
-			size="sm"
-			variant="default"
-			onClick={() => navigate('id')}
-		>
-			Create category
-		</Button>
+		<div className="flex items-center gap-4 flex-wrap">
+			<div className="flex items-center gap-2 flex-wrap">
+				{/* Search Input */}
+				<div className="relative">
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+					<Input
+						type="text"
+						placeholder="Search categories..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						onKeyPress={handleKeyPress}
+						className="pl-10 pr-10 w-64"
+					/>
+					{searchTerm && (
+						<X
+							className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer hover:text-slate-600"
+							onClick={clearSearch}
+						/>
+					)}
+				</div>
+				
+				{/* Search Button */}
+				<Button onClick={handleSearch} variant="outline" size="sm">
+					Search
+				</Button>
+			</div>
+			
+			<Button
+				size="sm"
+				variant="default"
+				onClick={() => navigate('id')}
+			>
+				Create category
+			</Button>
+		</div>
 	)
 }
 
@@ -35,7 +86,7 @@ const Category = () => {
 	const dispatch = useDispatch()
 	const navigate = useNavigate()
 	
-	const {loading, categories} = useSelector(state => state.category)
+	const {loading, categories, searchLoading} = useSelector(state => state.category)
 	
 	useEffect(() => {
 		dispatch(getCategories())
@@ -49,8 +100,6 @@ const Category = () => {
 		onDelete: handleDeleteCourse,
 		entityType: "category"
 	});
-	
-	if (loading) return <Loader/>
 	
 	return (
 		<>
@@ -68,7 +117,13 @@ const Category = () => {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{categories?.length === 0 ? (
+						{loading || searchLoading ? (
+							<TableRow>
+								<TableCell colSpan={6} className="text-center py-8">
+									<Loader/>
+								</TableCell>
+							</TableRow>
+						) : categories?.length === 0 ? (
 							<TableRow>
 								<TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
 									No categories found.
@@ -122,7 +177,8 @@ const Category = () => {
 										</DropdownMenu>
 									</TableCell>
 								</TableRow>
-							)))}
+							))
+						)}
 					</TableBody>
 				</Table>
 				{ModalComponent}

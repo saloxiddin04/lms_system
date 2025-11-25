@@ -8,7 +8,19 @@ export const getCategories = createAsyncThunk(
 			const response = await instance.get('/categories')
 			return response.data
 		} catch (e) {
-			return e.message
+			return thunkAPI.rejectWithValue(e.message)
+		}
+	}
+)
+
+export const searchCategory = createAsyncThunk(
+	"category/searchCategory",
+	async (searchTerm, thunkAPI) => {
+		try {
+			const response = await instance.get('/categories/search', {params: {q: searchTerm}})
+			return response.data
+		} catch (e) {
+			return thunkAPI.rejectWithValue(e.message)
 		}
 	}
 )
@@ -68,6 +80,7 @@ const categorySlice = createSlice({
 	name: "category",
 	initialState: {
 		loading: false,
+		searchLoading: false,
 		categories: null,
 		category: null
 	},
@@ -82,6 +95,19 @@ const categorySlice = createSlice({
 			})
 			.addCase(getCategories.rejected, (state) => {
 				state.loading = false
+			})
+		
+		// searchCategory
+		builder
+			.addCase(searchCategory.pending, (state) => {
+				state.searchLoading = true
+			})
+			.addCase(searchCategory.fulfilled, (state, {payload}) => {
+				state.categories = payload?.categories
+				state.searchLoading = false
+			})
+			.addCase(searchCategory.rejected, (state) => {
+				state.searchLoading = false
 			})
 		
 		// getCategory

@@ -1,6 +1,6 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {getCourses, togglePublishCourse} from "@/features/course/courseSlice.js";
+import {getCourses, searchCourse, togglePublishCourse} from "@/features/course/courseSlice.js";
 import Loader from "@/components/Loader.jsx";
 import {Button} from "@/components/ui/button.jsx";
 import {Badge} from "@/components/ui/badge.jsx";
@@ -15,19 +15,94 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu.jsx";
-import {Edit, MoreHorizontal, ViewIcon} from "lucide-react";
+import {Edit, MoreHorizontal, ViewIcon, Search, X} from "lucide-react";
+import {Input} from "@/components/ui/input.jsx";
+import {getCategories} from "@/features/category/categorySlice.js";
 
 const TopSideButtons = () => {
 	const navigate = useNavigate()
+	const dispatch = useDispatch()
+	
+	const {categories} = useSelector(state => state.category)
+	
+	const [searchTerm, setSearchTerm] = useState('');
+	const [categoryFilter, setCategoryFilter] = useState('');
+	
+	const handleSearch = () => {
+		if (searchTerm.trim() || categoryFilter) {
+			dispatch(searchCourse({q: searchTerm, category: categoryFilter}));
+		}
+	};
+	
+	const handleKeyPress = (e) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
+	
+	const clearSearch = () => {
+		setSearchTerm('');
+		setCategoryFilter('');
+		dispatch(getCourses());
+	};
 	
 	return (
-		<Button
-			size="sm"
-			variant="default"
-			onClick={() => navigate('create-course')}
-		>
-			Create course
-		</Button>
+		<div className="flex items-center gap-4 flex-wrap">
+			<div className="flex items-center gap-2 flex-wrap">
+				{/* Text Search */}
+				<div className="relative">
+					<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400"/>
+					<Input
+						type="text"
+						placeholder="Search courses..."
+						value={searchTerm}
+						onChange={(e) => setSearchTerm(e.target.value)}
+						onKeyPress={handleKeyPress}
+						className="pl-10 pr-10 w-64"
+					/>
+					{searchTerm && (
+						<X
+							className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer hover:text-slate-600"
+							onClick={() => setSearchTerm('')}
+						/>
+					)}
+				</div>
+				
+				{/* Category Filter */}
+				<select
+					value={categoryFilter}
+					onChange={(e) => setCategoryFilter(e.target.value)}
+					className="border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+				>
+					<option value="">All Categories</option>
+					{categories?.map((category, index) => (
+						<option key={index} value={category?.slug}>
+							{category?.name}
+						</option>
+					))}
+				</select>
+				
+				{/* Search Button */}
+				<Button onClick={handleSearch} variant="outline" size="sm">
+					Search
+				</Button>
+				
+				{/* Clear All Filters */}
+				{(searchTerm || categoryFilter) && (
+					<Button onClick={clearSearch} variant="ghost" size="sm">
+						Clear All
+					</Button>
+				)}
+			</div>
+			
+			<Button
+				size="sm"
+				variant="default"
+				onClick={() => navigate('create-course')}
+			>
+				Create course
+			</Button>
+		</div>
 	)
 }
 
@@ -35,17 +110,18 @@ const Course = () => {
 	const dispatch = useDispatch()
 	const navigate = useNavigate()
 	
-	const {courses, loading} = useSelector((state) => state.course);
+	const {courses, loading, searchLoading} = useSelector((state) => state.course);
 	
 	useEffect(() => {
 		dispatch(getCourses())
+		dispatch(getCategories())
 	}, [dispatch])
 	
-	if (loading) return <Loader/>
+	// if (loading) return <Loader/>
 	
 	return (
 		<>
-			<Header title={"Courses"} buttons={<TopSideButtons/>} />
+			<Header title={"Courses"} buttons={<TopSideButtons/>}/>
 			<div className="border rounded-xl bg-white my-4 shadow-md">
 				<Table>
 					<TableHeader>
@@ -62,122 +138,82 @@ const Course = () => {
 						</TableRow>
 					</TableHeader>
 					<TableBody>
-						{courses?.length === 0 ? (
+						{loading || searchLoading ?
 							<TableRow>
 								<TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-									No courses found.
+									<Loader/>
 								</TableCell>
-							</TableRow>
-						) : (
-							courses?.map((course) => (
-								<TableRow key={course?.id} className={"text-center"}>
-									<TableCell className="font-medium border-r">{course?.id}</TableCell>
-									<TableCell className="font-medium border-r">
-										{course?.title}
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										{course.published ? (
-											<Badge variant="success">Published</Badge>
-										) : (
-											<Badge variant="secondary">Draft</Badge>
-										)}
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										{course?.category?.name} <Badge variant="success">{course?.category?.slug}</Badge>
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										{course?.teacher?.name}
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										{course?.price_cents}
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										<img src={instance.defaults.baseURL + course?.preview_image} alt="image" className={'w-[100px] h-[40px] object-cover mx-auto'}/>
-									</TableCell>
-									<TableCell className="font-medium border-r">
-										{moment(course?.created_at).format("DD-MM-YYYY")}
-									</TableCell>
-									<TableCell>
-										<DropdownMenu>
-											<DropdownMenuTrigger asChild>
-												<Button variant="ghost" size="sm">
-													<MoreHorizontal className="h-4 w-4"/>
-												</Button>
-											</DropdownMenuTrigger>
-											<DropdownMenuContent align="end">
-												<DropdownMenuLabel>Actions</DropdownMenuLabel>
-												<DropdownMenuItem
-													onClick={() => navigate(`create-course/${course?.id}`)}
-												>
-													<Edit className="h-4 w-4 mr-2"/>
-													Edit
-												</DropdownMenuItem>
-												<DropdownMenuItem
-													onClick={() => dispatch(togglePublishCourse({id: course.id, published: !course.published}))}
-												>
-													<ViewIcon className="h-4 w-4 mr-2"/>
-													{course.published ? "Unpublish" : "Publish"}
-												</DropdownMenuItem>
-											</DropdownMenuContent>
-										</DropdownMenu>
-									</TableCell>
-								</TableRow>
-							))
-						)}
+							</TableRow> : (
+								courses?.length === 0 ? (
+									<TableRow>
+										<TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+											No courses found.
+										</TableCell>
+									</TableRow>
+								) : (
+									courses?.map((course) => (
+										<TableRow key={course?.id} className={"text-center"}>
+											<TableCell className="font-medium border-r">{course?.id}</TableCell>
+											<TableCell className="font-medium border-r">
+												{course?.title}
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												{course.published ? (
+													<Badge variant="success">Published</Badge>
+												) : (
+													<Badge variant="secondary">Draft</Badge>
+												)}
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												{course?.category?.name} <Badge variant="success">{course?.category?.slug}</Badge>
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												{course?.teacher?.name}
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												{course?.price_cents}
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												<img src={instance.defaults.baseURL + course?.preview_image} alt="image"
+												     className={'w-[100px] h-[40px] object-cover mx-auto'}/>
+											</TableCell>
+											<TableCell className="font-medium border-r">
+												{moment(course?.created_at).format("DD-MM-YYYY")}
+											</TableCell>
+											<TableCell>
+												<DropdownMenu>
+													<DropdownMenuTrigger asChild>
+														<Button variant="ghost" size="sm">
+															<MoreHorizontal className="h-4 w-4"/>
+														</Button>
+													</DropdownMenuTrigger>
+													<DropdownMenuContent align="end">
+														<DropdownMenuLabel>Actions</DropdownMenuLabel>
+														<DropdownMenuItem
+															onClick={() => navigate(`create-course/${course?.id}`)}
+														>
+															<Edit className="h-4 w-4 mr-2"/>
+															Edit
+														</DropdownMenuItem>
+														<DropdownMenuItem
+															onClick={() => dispatch(togglePublishCourse({
+																id: course.id,
+																published: !course.published
+															}))}
+														>
+															<ViewIcon className="h-4 w-4 mr-2"/>
+															{course.published ? "Unpublish" : "Publish"}
+														</DropdownMenuItem>
+													</DropdownMenuContent>
+												</DropdownMenu>
+											</TableCell>
+										</TableRow>
+									))
+								)
+							)}
 					</TableBody>
 				</Table>
 			</div>
-			{/*<div className="my-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">*/}
-			{/*	{courses?.map((course) => (*/}
-			{/*		<Card key={course.id} className="shadow-md rounded-xl">*/}
-			{/*			<CardHeader>*/}
-			{/*				<CardTitle className="flex items-center justify-between">*/}
-			{/*					{course.title}*/}
-			{/*					{course.published ? (*/}
-			{/*						<Badge variant="success">Published</Badge>*/}
-			{/*					) : (*/}
-			{/*						<Badge variant="secondary">Draft</Badge>*/}
-			{/*					)}*/}
-			{/*				</CardTitle>*/}
-			{/*			</CardHeader>*/}
-			{/*			*/}
-			{/*			<CardContent className="space-y-3">*/}
-			{/*				{course.preview_image && (*/}
-			{/*					<img*/}
-			{/*						src={instance.defaults.baseURL + course?.preview_image}*/}
-			{/*						alt={course?.title}*/}
-			{/*						className="w-full h-40 object-cover rounded-lg"*/}
-			{/*					/>*/}
-			{/*				)}*/}
-			{/*				<p className="text-sm text-gray-600">{course.description}</p>*/}
-			{/*				<p className="text-sm">*/}
-			{/*					<strong>Teacher:</strong> {course.teacher.name} ({course.teacher.email})*/}
-			{/*				</p>*/}
-			{/*				<p className="text-sm">*/}
-			{/*					<strong>Price:</strong> {course.price_cents} {course.currency}*/}
-			{/*				</p>*/}
-			{/*				<div className="flex gap-2 mt-3">*/}
-			{/*					<Button*/}
-			{/*						size="sm"*/}
-			{/*						variant="outline"*/}
-			{/*						onClick={() => navigate(`create-course/${course.id}`)}*/}
-			{/*					>*/}
-			{/*						Edit*/}
-			{/*					</Button>*/}
-			{/*					<Button*/}
-			{/*						size="sm"*/}
-			{/*						variant="default"*/}
-			{/*						onClick={() =>*/}
-			{/*							dispatch(togglePublishCourse({id: course.id, published: !course.published}))*/}
-			{/*						}*/}
-			{/*					>*/}
-			{/*						{course.published ? "Unpublish" : "Publish"}*/}
-			{/*					</Button>*/}
-			{/*				</div>*/}
-			{/*			</CardContent>*/}
-			{/*		</Card>*/}
-			{/*	))}*/}
-			{/*</div>*/}
 		</>
 	);
 };

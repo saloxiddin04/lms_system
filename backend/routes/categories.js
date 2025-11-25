@@ -20,12 +20,8 @@ router.post('/', authenticate, authorizeRole("admin"), async (req, res) => {
 	}
 })
 
-router.get('/', authenticate, authorizeRole("admin", "teacher"), async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
 	try {
-		if (req.user.role !== "admin" && req.user.role !== "teacher") {
-			return res.status(403).json({ error: "Forbidden" });
-		}
-		
 		const q = await db.query(`
 			SELECT
 				c.*,
@@ -37,6 +33,38 @@ router.get('/', authenticate, authorizeRole("admin", "teacher"), async (req, res
 		`);
 		
 		res.status(200).json(q.rows);
+	} catch (e) {
+		res.status(500).json({error: e.message});
+	}
+});
+
+router.get('/search', authenticate, async (req, res) => {
+	try {
+		const { q: searchTerm } = req.query;
+		let params = [];
+		let query = `
+			SELECT
+				c.*,
+				COUNT(co.id) as courses_count
+			FROM categories c
+			LEFT JOIN courses co ON c.id = co.category
+		`;
+		
+		// Search qismi
+		if (searchTerm) {
+			query += ` WHERE (c.name ILIKE $1 OR c.slug ILIKE $2)`;
+			const term = `%${searchTerm}%`;
+			params.push(term, term);
+		}
+		
+		// Group va Order
+		query += ` GROUP BY c.id ORDER BY c.created_at DESC`;
+		
+		const result = await db.query(query, params);
+		
+		res.status(200).json({
+			categories: result.rows,
+		});
 	} catch (e) {
 		res.status(500).json({error: e.message});
 	}
