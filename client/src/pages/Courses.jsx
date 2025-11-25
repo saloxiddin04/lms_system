@@ -2,23 +2,50 @@ import React, { useEffect, useState } from 'react';
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.jsx";
 import instance from "@/utils/axios.js";
-import { BookOpen, Grid3X3, List } from "lucide-react";
+import {BookOpen, Grid3X3, List, Search, X} from "lucide-react";
+import {Input} from "@/components/ui/input.jsx";
 import { Badge } from "@/components/ui/badge.jsx";
 import { Button } from "@/components/ui/button.jsx";
 import { useDispatch, useSelector } from "react-redux";
-import { getCourses } from "@/features/course/courseSlice.js";
+import {getCourses, searchCourse} from "@/features/course/courseSlice.js";
 import CourseSkeleton from "@/components/CourseSkeleton.jsx";
+import {getCategories} from "@/features/category/categorySlice.js";
 
 const Courses = () => {
 	const dispatch = useDispatch();
-	const { courses, loading } = useSelector(state => state.course);
+	
+	const {courses, loading, searchLoading} = useSelector(state => state.course)
+	
+	const {categories} = useSelector(state => state.category)
+	
 	const [viewMode, setViewMode] = useState('grid');
+	const [searchTerm, setSearchTerm] = useState('');
+	const [categoryFilter, setCategoryFilter] = useState('');
 	
 	useEffect(() => {
-		dispatch(getCourses());
-	}, [dispatch]);
+		dispatch(getCourses())
+		dispatch(getCategories())
+	}, [dispatch])
 	
-	if (loading) return <CourseSkeleton />;
+	const handleSearch = () => {
+		if (searchTerm.trim() || categoryFilter) {
+			dispatch(searchCourse({ q: searchTerm, category: categoryFilter }));
+		} else {
+			dispatch(getCourses());
+		}
+	};
+	
+	const handleKeyPress = (e) => {
+		if (e.key === 'Enter') {
+			handleSearch();
+		}
+	};
+	
+	const clearSearch = () => {
+		setSearchTerm('');
+		setCategoryFilter('');
+		dispatch(getCourses());
+	};
 	
 	// Grid View Card
 	const GridCourseCard = ({ course }) => (
@@ -160,8 +187,7 @@ const Courses = () => {
 	
 	return (
 		<section className="py-20">
-			<div className="container mx-auto px-4">
-				{/* Header with View Controls */}
+			<div className="container mx-auto">
 				<div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 gap-4">
 					<div>
 						<h1 className="text-3xl font-bold text-slate-900 mb-2">All Courses</h1>
@@ -169,47 +195,112 @@ const Courses = () => {
 					</div>
 					
 					{/* View Mode Toggle */}
-					<div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
-						<Button
-							variant={viewMode === 'grid' ? 'default' : 'ghost'}
-							size="sm"
-							onClick={() => setViewMode('grid')}
-							className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
-						>
-							<Grid3X3 className="h-4 w-4 text-slate-600" />
-						</Button>
-						<Button
-							variant={viewMode === 'list' ? 'default' : 'ghost'}
-							size="sm"
-							onClick={() => setViewMode('list')}
-							className={`px-3 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
-						>
-							<List className="h-4 w-4 text-slate-600" />
-						</Button>
+					<div className="flex items-center gap-4">
+						{/* Search Input */}
+						<div className="flex items-center gap-2">
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400"/>
+								<Input
+									type="text"
+									placeholder="Search courses..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									onKeyPress={handleKeyPress}
+									className="pl-10 pr-10 w-64"
+								/>
+								{searchTerm && (
+									<X
+										className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400 cursor-pointer hover:text-slate-600"
+										onClick={clearSearch}
+									/>
+								)}
+							</div>
+							
+							{/* Category Filter */}
+							<select
+								value={categoryFilter}
+								onChange={(e) => setCategoryFilter(e.target.value)}
+								className="border border-slate-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+							>
+								<option value="">All Categories</option>
+								{categories?.map((category, index) => (
+									<option key={index} value={category?.slug}>
+										{category?.name}
+									</option>
+								))}
+							</select>
+							
+							<Button onClick={handleSearch} disabled={searchLoading}>
+								{searchLoading ? "Searching..." : "Search"}
+							</Button>
+						</div>
+						
+						{/* View Mode Toggle */}
+						<div className="flex items-center gap-2 bg-slate-100 rounded-lg p-1">
+							<Button
+								variant={viewMode === 'grid' ? 'default' : 'ghost'}
+								size="sm"
+								onClick={() => setViewMode('grid')}
+								className={`px-3 ${viewMode === 'grid' ? 'bg-white shadow-sm' : ''}`}
+							>
+								<Grid3X3 className="h-4 w-4 text-slate-600"/>
+							</Button>
+							<Button
+								variant={viewMode === 'list' ? 'default' : 'ghost'}
+								size="sm"
+								onClick={() => setViewMode('list')}
+								className={`px-3 ${viewMode === 'list' ? 'bg-white shadow-sm' : ''}`}
+							>
+								<List className="h-4 w-4 text-slate-600"/>
+							</Button>
+						</div>
 					</div>
 				</div>
 				
+				{/* Loading State */}
+				{searchLoading && (
+					<div className="text-center py-8">
+						<CourseSkeleton/>
+					</div>
+				)}
+				
+				{loading && (
+					<div className="text-center py-8">
+						<CourseSkeleton/>
+					</div>
+				)}
+				
 				{/* Courses Grid/List */}
-				{viewMode === 'grid' ? (
+				{!searchLoading && (viewMode === 'grid' ? (
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
 						{courses?.map((course) => (
-							<GridCourseCard key={course?.id} course={course} />
+							<GridCourseCard key={course?.id} course={course}/>
 						))}
 					</div>
 				) : (
 					<div className="space-y-4">
 						{courses?.map((course) => (
-							<ListCourseCard key={course?.id} course={course} />
+							<ListCourseCard key={course?.id} course={course}/>
 						))}
 					</div>
-				)}
+				))}
 				
 				{/* Empty State */}
-				{!loading && courses?.length === 0 && (
+				{!loading && !searchLoading && courses?.length === 0 && (
 					<div className="text-center py-12">
-						<BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4" />
+						<BookOpen className="h-16 w-16 text-slate-300 mx-auto mb-4"/>
 						<h3 className="text-lg font-medium text-slate-900 mb-2">No courses found</h3>
-						<p className="text-slate-600">Check back later for new courses</p>
+						<p className="text-slate-600 mb-4">
+							{searchTerm || categoryFilter
+								? "Try adjusting your search criteria"
+								: "Check back later for new courses"
+							}
+						</p>
+						{(searchTerm || categoryFilter) && (
+							<Button onClick={clearSearch} variant="outline">
+								Clear Search
+							</Button>
+						)}
 					</div>
 				)}
 			</div>

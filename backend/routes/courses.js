@@ -60,6 +60,68 @@ router.get('/', optionalAuth, async (req, res) => {
 	}
 });
 
+router.get('/search', optionalAuth, async (req, res) => {
+	try {
+		const { q: searchTerm, category } = req.query;
+		let params = [];
+		let whereConditions = [];
+		
+		// Asosiy query
+		let query = `
+			SELECT c.*,
+				json_build_object('id', u.id, 'name', u.name, 'email', u.email, 'role', u.role) AS teacher,
+				CASE WHEN cat.id IS NOT NULL THEN json_build_object('id', cat.id, 'name', cat.name, 'slug', cat.slug)
+					 ELSE NULL END AS category
+			FROM courses c
+			JOIN users u ON c.teacher = u.id
+			LEFT JOIN categories cat ON c.category = cat.id
+		`;
+		
+		// Role-based access
+		if (req?.user?.role === 'teacher') {
+			whereConditions.push(`c.teacher = $${params.length + 1}`);
+			params.push(req.user.id);
+		} else if (req?.user?.role !== 'admin') {
+			whereConditions.push(`c.published = true`);
+		}
+		
+		// Search term
+		if (searchTerm) {
+			whereConditions.push(`(
+				c.title ILIKE $${params.length + 1} OR
+				c.description ILIKE $${params.length + 2} OR
+				u.name ILIKE $${params.length + 3}
+			)`);
+			const term = `%${searchTerm}%`;
+			params.push(term, term, term);
+		}
+		
+		// Category filter
+		if (category) {
+			whereConditions.push(`cat.slug = $${params.length + 1}`);
+			params.push(category);
+		}
+		
+		// Where qismini qo'shish
+		if (whereConditions.length > 0) {
+			query += ` WHERE ${whereConditions.join(' AND ')}`;
+		}
+		
+		// Order by
+		query += ` ORDER BY c.created_at DESC`;
+		
+		const result = await db.query(query, params);
+		
+		res.status(200).json({
+			courses: result.rows,
+		});
+		
+	} catch (e) {
+		console.error(e);
+		res.status(500).json({error: e.message});
+	}
+});
+
 router.get('/:id', optionalAuth, async (req, res) => {
 	try {
 		const {id} = req.params;
