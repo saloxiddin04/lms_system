@@ -3,12 +3,9 @@ import {Route, Routes} from "react-router-dom";
 import Lesson from "@/pages/Student/Lesson/Lesson.jsx";
 import Profile from "@/pages/Profile.jsx";
 import MyCourses from "@/pages/Student/Course/MyCourses.jsx";
+import Dashboard from "@/pages/Student/Dashboard/Dashboard.jsx";
 
-function Dashboard() {
-	return <h2>Dashboard</h2>
-}
-
-const TeacherLayout = () => {
+const StudentLayout = () => {
 	return (
 		<div>
 			<div className="flex">
@@ -26,4 +23,4 @@ const TeacherLayout = () => {
 	);
 };
 
-export default TeacherLayout;
+export default StudentLayout;

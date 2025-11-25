@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import instance from "@/utils/axios.js";
 import CourseSkeleton from "@/components/CourseSkeleton.jsx";
+import moment from "moment";
 
 const MyCourses = () => {
 	const dispatch = useDispatch();
@@ -50,15 +51,15 @@ const MyCourses = () => {
 				{/* Header */}
 				<div className="mb-8 text-center">
 					<h1 className="text-4xl font-bold text-slate-900 mb-3">
-						Mening Kurslarim
+						My Courses
 					</h1>
 					<p className="text-lg text-slate-600 max-w-2xl mx-auto">
-						Sizning o'qiyotgan va yakunlagan kurslaringiz. Davom eting yoki qayta ko'rib chiqing.
+						Your current and completed courses. Continue or review.
 					</p>
 					<div className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-50 rounded-full">
 						<BookOpen className="h-4 w-4 text-blue-600" />
 						<span className="text-sm font-medium text-blue-700">
-              {myCourses?.courses?.length} ta kurs
+              {myCourses?.courses?.length} courses
             </span>
 					</div>
 				</div>
@@ -160,7 +161,7 @@ const CourseCard = ({ course, getProgressColor }) => {
 					<div className="flex justify-between text-sm">
 						<span className="text-slate-600">Progress</span>
 						<span className="font-medium text-slate-900">
-              {course?.completed_lessons}/{course?.total_lessons} dars
+              {course?.completed_lessons}/{course?.total_lessons} lesson
             </span>
 					</div>
 					<Progress
@@ -184,21 +185,21 @@ const CourseCard = ({ course, getProgressColor }) => {
 					<Button asChild className="flex-1" variant="outline">
 						<Link to={`/student/${course?.id}/lessons/${lessonIds[0]}`}>
 							<CheckCircle2 className="h-4 w-4 mr-2" />
-							Qayta Ko'rish
+							Review
 						</Link>
 					</Button>
 				) : course?.progress_percent > 0 ? (
 					<Button asChild className="flex-1">
 						<Link to={`/student/${course?.id}/lessons/${lessonIds[0]}`}>
 							<PlayCircle className="h-4 w-4 mr-2" />
-							Davom Etish
+							Continue
 						</Link>
 					</Button>
 				) : (
 					<Button asChild className="flex-1">
 						<Link to={`/student/${course?.id}/lessons/${lessonIds[0]}`}>
 							<PlayCircle className="h-4 w-4 mr-2" />
-							Boshlash
+							Getting Started
 						</Link>
 					</Button>
 				)}
@@ -214,7 +215,7 @@ const CourseCard = ({ course, getProgressColor }) => {
 			<div className="px-6 pt-2 border-t border-slate-100">
 				<div className="flex items-center text-xs text-slate-500">
 					<Clock className="h-3 w-3 mr-1" />
-					Yozilgan: {new Date(course?.enrolled_at).toLocaleDateString('uz-UZ')}
+					created: {moment(course?.enrolled_at).format("DD-MM-YYYY")}
 				</div>
 			</div>
 		</Card>

@@ -106,16 +106,19 @@ const menuItems = {
 	student: [
 		{to: "/student/dashboard", label: "Dashboard"},
 		{to: "/student/my-courses", label: "My Courses"},
+		{to: "/student/profile", label: "Profile"},
 	],
 	teacher: [
 		{to: "/teacher/dashboard", label: "Dashboard"},
 		{to: "/teacher/courses", label: "Manage Courses"},
+		{to: "/teacher/profile", label: "Profile"},
 	],
 	admin: [
 		{to: "/admin/dashboard", label: "Dashboard"},
 		{to: "/admin/users", label: "Users"},
 		{to: "/admin/courses", label: "Courses"},
 		{to: "/admin/category", label: "Category"},
+		{to: "/admin/profile", label: "Profile"},
 	],
 };
 

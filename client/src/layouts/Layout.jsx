@@ -3,7 +3,7 @@ import Sidebar from "@/components/Sidebar";
 import { getUserData } from "@/auth/jwtService.js";
 import React from "react";
 
-export default function DashboardLayout({ children }) {
+export default function Layout({ children }) {
 	return (
 		<div className="h-screen">
 			<Navbar />

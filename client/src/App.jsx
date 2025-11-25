@@ -4,7 +4,7 @@ import Login from "@/pages/Auth/Login.jsx";
 import VerifyEmail from "@/pages/Auth/VerifyEmail.jsx";
 import ProtectedRoute from "@/components/ProtectedRoute.jsx";
 import AdminLayout from "@/layouts/AdminLayout.jsx";
-import DashboardLayout from "@/layouts/DashboardLayout.jsx";
+import Layout from "@/layouts/Layout.jsx";
 import TeacherLayout from "@/layouts/TeacherLayout.jsx";
 import Hero from "@/pages/Hero.jsx";
 import Error403 from "@/pages/Error403.jsx";
@@ -37,9 +37,9 @@ function App() {
           path="/admin/*"
           element={
             <ProtectedRoute roles={["admin"]}>
-              <DashboardLayout>
+              <Layout>
                 <AdminLayout />
-              </DashboardLayout>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -48,9 +48,9 @@ function App() {
           path="/teacher/*"
           element={
             <ProtectedRoute roles={["teacher"]}>
-              <DashboardLayout>
+              <Layout>
                 <TeacherLayout />
-              </DashboardLayout>
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -59,9 +59,9 @@ function App() {
           path="/student/*"
           element={
             <ProtectedRoute roles={["student"]}>
-              <DashboardLayout>
+              <Layout>
                 <StudentLayout />
-              </DashboardLayout>
+              </Layout>
             </ProtectedRoute>
           }
         />

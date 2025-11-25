@@ -193,9 +193,9 @@ const Hero = () => {
 				{/* Hero Section */}
 				<section className="py-40 text-center bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white">
 					<div className="container mx-auto">
-						<h1 className="text-4xl font-bold mb-4">O'rganing. Amaliyot qiling. Natijaga erishing.</h1>
-						<p className="text-lg mb-6">Eng yaxshi kurslar bir joyda. Hozir boshlang!</p>
-						<Button size="lg" variant="secondary" onClick={() => navigate("/courses")}>Kurslarni Ko'rish</Button>
+						<h1 className="text-4xl font-bold mb-4">Learn. Practice. Achieve results..</h1>
+						<p className="text-lg mb-6">The best courses in one place. Start now!</p>
+						<Button size="lg" variant="secondary" onClick={() => navigate("/courses")}>View courses</Button>
 					</div>
 				</section>
 				

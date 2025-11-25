@@ -1,8 +1,8 @@
 import React, {useEffect} from 'react';
-import {useNavigate, useParams, useSearchParams} from "react-router-dom";
+import {useNavigate, useParams} from "react-router-dom";
 import {useDispatch, useSelector} from "react-redux";
 import Navbar from "@/components/Navbar.jsx";
-import {CheckCircle, PlayCircle, Layers, Clock} from "lucide-react";
+import {PlayCircle} from "lucide-react";
 import {Button} from "@/components/ui/button.jsx";
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card.jsx";
 import moment from "moment";
@@ -33,12 +33,12 @@ const CourseDetail = () => {
 	const handleEnroll = () => {
 		dispatch(enrollCourse({ id })).then(({ payload }) => {
 			if (payload?.ok && payload?.message?.includes("Enrolled")) {
-				toast.success("Kursga muvaffaqiyatli yozildingiz!");
+				toast.success("You have successfully enrolled in the course!");
 				dispatch(getCourseById({ id }));
 			} else if (payload?.url) {
 				window.location.href = payload.url;
 			} else {
-				toast.error(payload?.error || "Xatolik yuz berdi");
+				toast.error(payload?.error || "Something went wrong");
 			}
 		});
 	};
@@ -58,12 +58,12 @@ const CourseDetail = () => {
 							<CardTitle className={"text-2xl"}>{course?.title}</CardTitle>
 						</CardHeader>
 						<CardContent className="text-sm text-gray-700">
-							<p className="text-gray-600 leading-relaxed">{course?.description}</p>
+							<p className="text-gray-600 leading-relaxed text-lg">{course?.description}</p>
 							
 							<div className="flex items-center gap-4 text-lg text-gray-500">
 								<span>👨‍🏫 {course?.teacher_name}</span>
 								<span>📅 {moment(course?.created_at).format("DD-MM-YYYY")}</span>
-								<span>🎓 {course?.lessons?.length} ta dars</span>
+								<span>🎓 {course?.lessons?.length} lessons</span>
 							</div>
 						</CardContent>
 					</Card>
@@ -78,9 +78,9 @@ const CourseDetail = () => {
 						)}
 						<CardContent className="p-4 space-y-3">
 							<div>
-								<span className="block text-gray-500 text-sm">Kurs narxi</span>
+								<span className="block text-gray-500 text-sm">Price</span>
 								{course?.price_cents === 0 ? (
-									<span className="text-green-600 font-semibold text-lg">Bepul</span>
+									<span className="text-green-600 font-semibold text-lg">Free</span>
 								) : (
 									<span className="text-gray-800 font-semibold text-lg">
                   {course?.price_cents} {course?.currency.toUpperCase()}
@@ -93,7 +93,7 @@ const CourseDetail = () => {
 									onClick={course?.enrolled ? handleNavigate : handleEnroll}
 									disabled={enrollLoading}
 								>
-									{course?.enrolled ? "Kursni ko‘rish" : "Sotib olish"}
+									{course?.enrolled ? "View course" : "Purchase"}
 									<PlayCircle className="ml-2 w-4 h-4"/>
 								</Button>
 							)}
@@ -105,7 +105,7 @@ const CourseDetail = () => {
 				
 				{/* Kurs dasturi */}
 				<div className="space-y-4">
-					<h2 className="text-2xl font-semibold">Kurs dasturi</h2>
+					<h2 className="text-2xl font-semibold">Course program</h2>
 					
 					<Card>
 						<CardContent className="divide-y">
@@ -125,20 +125,18 @@ const CourseDetail = () => {
 												variant="outline"
 												onClick={() => toast.success("Teginga dars ochildi!")}
 											>
-												<PlayCircle className="w-4 h-4 mr-2"/>
-												Bepul ko‘rish
+												<PlayCircle className="w-4 h-4"/>
 											</Button>
 										) : (
 											<Button size="sm" variant="outline">
-												<PlayCircle className="w-4 h-4 mr-2"/>
-												Ko‘rish
+												<PlayCircle className="w-4 h-4"/>
 											</Button>
 										)}
 									</div>
 								))
 							) : (
 								<p className="text-sm text-gray-500 py-3">
-									Hozircha darslar mavjud emas.
+									There are no lessons available yet.
 								</p>
 							)}
 						</CardContent>

@@ -16,7 +16,7 @@ export default function Navbar() {
 					<div className="flex items-center gap-4">
 						{getUserData() ? (
 							<>
-								<Button variant={"outline"} onClick={() => navigate(`/${user?.role}/profile`)} className="text-sm text-gray-600">
+								<Button variant={"outline"} onClick={() => navigate(`/${user?.role}/dashboard`)} className="text-sm text-gray-600">
 									Hi, {getUserData()?.name}
 								</Button>
 								{getUserData()?.role === "admin" && (

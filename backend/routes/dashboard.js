@@ -3,11 +3,7 @@ const router = express.Router()
 const db = require('../db')
 const {authenticate, authorizeRole} = require('../middleware/auth')
 
-router.get(
-	"/teacher",
-	authenticate,
-	authorizeRole("teacher", "admin"),
-	async (req, res) => {
+router.get("/teacher", authenticate, authorizeRole("teacher", "admin"), async (req, res) => {
 		try {
 			const teacherId = req.user.id;
 			
@@ -54,8 +50,7 @@ router.get(
 			console.error(e);
 			res.status(500).json({ error: e.message });
 		}
-	}
-);
+	});
 
 // get earnings for teacher
 router.get('/teacher/earnings', authenticate, authorizeRole("teacher"), async (req, res) => {
@@ -167,7 +162,6 @@ router.get('/top-students', authenticate, authorizeRole('admin'), async (req, re
 	}
 });
 
-
 // GET /student/my-courses
 router.get('/my-courses', authenticate, async (req, res) => {
 	try {
@@ -218,6 +212,108 @@ router.get('/my-courses', authenticate, async (req, res) => {
 		res.status(200).json({
 			success: true,
 			courses: courses
+		});
+		
+	} catch (e) {
+		console.error(e);
+		res.status(500).json({ error: e.message });
+	}
+});
+
+// GET /student/dashboard
+router.get('/student', authenticate, authorizeRole('student'), async (req, res) => {
+	try {
+		const userId = req.user.id;
+		
+		// Total enrolled courses
+		const totalCourses = await db.query(
+			`SELECT COUNT(*) FROM enrollments WHERE user_id = $1`,
+			[userId]
+		);
+		
+		// Total completed lessons
+		const completedLessons = await db.query(`
+      SELECT COUNT(*)
+      FROM lessons l
+      JOIN enrollments e ON l.course_id = e.course_id
+      WHERE e.user_id = $1 AND l.is_completed = true
+    `, [userId]);
+		
+		// Total spent
+		const totalSpent = await db.query(`
+      SELECT COALESCE(SUM(amount_cents), 0) as total
+      FROM payments
+      WHERE user_id = $1 AND status = 'succeeded'
+    `, [userId]);
+		
+		// Recent enrolled courses
+		const recentCourses = await db.query(`
+      SELECT
+        c.*,
+        u.name as teacher_name,
+        cat.name as category_name,
+        e.enrolled_at,
+        (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_published = true) as total_lessons,
+        (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_completed = true) as completed_lessons
+      FROM enrollments e
+      JOIN courses c ON e.course_id = c.id
+      JOIN users u ON c.teacher = u.id
+      LEFT JOIN categories cat ON c.category = cat.id
+      WHERE e.user_id = $1 AND c.published = true
+      ORDER BY e.enrolled_at DESC
+      LIMIT 5
+    `, [userId]);
+		
+		// Progress by course
+		const progressByCourse = await db.query(`
+      SELECT
+        c.id,
+        c.title,
+        (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_published = true) as total_lessons,
+        (SELECT COUNT(*) FROM lessons l WHERE l.course_id = c.id AND l.is_completed = true) as completed_lessons
+      FROM enrollments e
+      JOIN courses c ON e.course_id = c.id
+      WHERE e.user_id = $1 AND c.published = true
+    `, [userId]);
+		
+		// Calculate overall progress
+		let totalLessons = 0;
+		let totalCompleted = 0;
+		
+		progressByCourse.rows.forEach(course => {
+			totalLessons += parseInt(course.total_lessons) || 0;
+			totalCompleted += parseInt(course.completed_lessons) || 0;
+		});
+		
+		const overallProgress = totalLessons > 0 ? Math.round((totalCompleted / totalLessons) * 100) : 0;
+		
+		res.status(200).json({
+			stats: {
+				totalCourses: parseInt(totalCourses.rows[0].count),
+				completedLessons: parseInt(completedLessons.rows[0].count),
+				totalSpent: parseInt(totalSpent.rows[0].total),
+				overallProgress: overallProgress
+			},
+			recentCourses: recentCourses.rows.map(course => {
+				const progressPercent = course.total_lessons > 0
+					? Math.round((course.completed_lessons / course.total_lessons) * 100)
+					: 0;
+				
+				return {
+					...course,
+					progress_percent: progressPercent
+				};
+			}),
+			progressByCourse: progressByCourse.rows.map(course => {
+				const progressPercent = course.total_lessons > 0
+					? Math.round((course.completed_lessons / course.total_lessons) * 100)
+					: 0;
+				
+				return {
+					...course,
+					progress_percent: progressPercent
+				};
+			})
 		});
 		
 	} catch (e) {
