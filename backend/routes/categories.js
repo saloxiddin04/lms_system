@@ -20,7 +20,7 @@ router.post('/', authenticate, authorizeRole("admin"), async (req, res) => {
 	}
 })
 
-router.get('/', authenticate, async (req, res) => {
+router.get('/', async (req, res) => {
 	try {
 		const q = await db.query(`
 			SELECT

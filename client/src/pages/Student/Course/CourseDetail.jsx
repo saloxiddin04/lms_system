@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import VideoPlayer from "@/components/VideoPlayer.jsx";
 import {enrollCourse} from "@/features/enroll/enrollSlice.js";
 import {getUserData} from "@/auth/jwtService.js";
+import Loader from "@/components/Loader.jsx";
 
 const CourseDetail = () => {
 	const dispatch = useDispatch()
@@ -46,6 +47,8 @@ const CourseDetail = () => {
 	const handleNavigate = () => {
 		navigate(`/student/${id}/lessons/${course?.lessons[0]?.id}`)
 	}
+	
+	if (loading) return <div className="flex justify-center items-center h-screen"><Loader /></div>
 	
 	return (
 		<div>

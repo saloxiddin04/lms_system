@@ -36,7 +36,8 @@ instance.interceptors.response.use(
 		if (status === 401) {
 			if (
 				window.location.pathname !== "/login" &&
-				window.location.pathname !== "/register"
+				window.location.pathname !== "/register" &&
+				window.location.pathname !== "/"
 			) {
 				try {
 					await logout({refresh, headers: {Authorization: `Bearer ${access}`}});
