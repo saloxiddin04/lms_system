@@ -82,7 +82,7 @@ const CourseDetail = () => {
 						<CardContent className="p-4 space-y-3">
 							<div>
 								<span className="block text-gray-500 text-sm">Price</span>
-								{course?.price_cents === 0 ? (
+								{course?.price_cents === "0.00" ? (
 									<span className="text-green-600 font-semibold text-lg">Free</span>
 								) : (
 									<span className="text-gray-800 font-semibold text-lg">

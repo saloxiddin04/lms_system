@@ -19,7 +19,7 @@ import {useDispatch} from "react-redux";
 import {updateCourse} from "@/features/course/courseSlice.js";
 
 const formSchema = z.object({
-	price_cents: z.coerce.number()
+	price_cents: z.coerce.number().min(0)
 })
 
 const PriceForm = ({initialData, courseId}) => {
